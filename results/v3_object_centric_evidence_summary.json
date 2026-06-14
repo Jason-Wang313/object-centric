@@ -1,0 +1,41 @@
+{
+  "claim_status": {
+    "C1": "strongly_supported",
+    "C2": "strongly_supported",
+    "C3": "partial",
+    "C4": "strongly_supported",
+    "C5": "unsupported",
+    "C6": "unsupported",
+    "C7": "unsupported"
+  },
+  "forbidden_supported_overclaims": [],
+  "generated_artifacts": [
+    "results/tables/v3_object_centric_scorecard.csv",
+    "results/tables/v3_object_centric_attack_ledger.csv",
+    "results/v3_object_centric_evidence_summary.json",
+    "results/v3_object_centric_evidence_summary.md",
+    "paper/v3_object_results_macros.tex",
+    "paper/v3_scorecard_table.tex",
+    "paper/v3_attack_ledger_table.tex",
+    "figures/figure32_v3_evidence_scorecard.png",
+    "figures/figure33_v3_repair_tiers.png",
+    "figures/figure34_v3_stress_scope.png",
+    "figures/figure35_v3_learned_transfer.png",
+    "figures/figure36_v3_deployment_friction.png",
+    "figures/figure37_v3_attack_coverage.png"
+  ],
+  "key_values": {
+    "deployable_no_leak_budget32_gap_closure": 0.6839114807061593,
+    "exact_law_mean_mae": 0.00046291189986127505,
+    "learned_repair_policy_vs_raw_gain": 0.8234771981724383,
+    "raw_tail_identity_error": 1.0,
+    "raw_tail_score_gain": 0.5759192453426587,
+    "raw_tail_utility_drop": 0.3639708878079679,
+    "support_covered_budget32_gap_closure": 0.9189083243131476
+  },
+  "paper_identity": "object-centric slots under selection pressure",
+  "paper_text_overclaims": [],
+  "passes_claim_audit": true,
+  "target_page_count_minimum": 25,
+  "uses_cached_artifacts_only": true
+}

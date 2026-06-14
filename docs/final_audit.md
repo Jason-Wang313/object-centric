@@ -108,6 +108,8 @@ The toy proxy panel is a controlled diagnostic comparison, not a graph-physics b
 - results\tables\target_identity_sweep_metrics.csv
 - results\tables\target_identity_sweep_seed_metrics.csv
 - results\tables\unidentifiable_negative_control.csv
+- results\tables\v3_object_centric_attack_ledger.csv
+- results\tables\v3_object_centric_scorecard.csv
 ### figures
 - figures\figure10_repair_robustness.png
 - figures\figure10_score_calibration.png
@@ -134,6 +136,12 @@ The toy proxy panel is a controlled diagnostic comparison, not a graph-physics b
 - figures\figure2_repair_comparison.png
 - figures\figure30_deployment_gate_policy.png
 - figures\figure31_learned_repair_policy_transfer.png
+- figures\figure32_v3_evidence_scorecard.png
+- figures\figure33_v3_repair_tiers.png
+- figures\figure34_v3_stress_scope.png
+- figures\figure35_v3_learned_transfer.png
+- figures\figure36_v3_deployment_friction.png
+- figures\figure37_v3_attack_coverage.png
 - figures\figure3_tail_diagnostics.png
 - figures\figure4_targeted_probe_before_after.png
 - figures\figure5_exact_law_validation.png
@@ -150,6 +158,7 @@ The toy proxy panel is a controlled diagnostic comparison, not a graph-physics b
 - docs\results_digest.md
 - docs\reviewer_attacks.md
 - docs\theory.md
+- docs\v3_execution_plan.md
 ### paper
 - paper\abstract.md
 - paper\checklist.md

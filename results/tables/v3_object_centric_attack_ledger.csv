@@ -1,0 +1,51 @@
+round,attack_id,reviewer_angle,failure_mode,harsh_question,defense_artifact_or_revision,status
+1,law_generic,theory novelty,The finite law is generic.,Is the paper just reusing a theorem?,Concede generic law; make object slots/identity the empirical contribution.,bounded
+2,duplicate_wrapper,novelty,Paper could look like a generic candidate-budget wrapper.,Could this be swapped with another architecture paper?,"Remove budget-maximization framing; center slots, binding, probes, hidden properties.",pass
+3,synthetic_only,external validity,All experiments are synthetic.,Why should reviewers trust the scope?,"Explicit boundary: controlled synthetic evidence, no robot claim.",bounded
+4,real_robot,overclaim,No real robot validation.,Does the paper imply deployment?,Unsupported boundary claims remain explicit in claim audit.,pass
+5,benchmark_superiority,overclaim,Toy proxies are not broad benchmarks.,Does it claim to beat graph/diffusion/latent methods?,State proxy panel is diagnostic only.,pass
+6,universal_repair,overclaim,Some hidden modes are impossible.,Does the method promise guaranteed recovery?,Negative control blocks high-N and forbids universal repair.,pass
+7,score_miscalibration,mechanism,Raw score may just be badly calibrated.,Is binding really the cause?,"Report score bins, object-real gap, identity error, and failure families.",pass
+8,one_scenario,scope,Failure may be one handcrafted case.,How many variants reproduce it?,"Dense, extreme, retargeting, randomized, benchmark-style suites.",pass
+9,target_zero,scope,Target may be hard-coded as object zero.,What if target identity changes?,Counterfactual target and six-target sweep.,pass
+10,more_objects,scale,Result may vanish with more distractors.,What about 6/8/10/12 objects?,OOD dense and extreme object-count tables.,pass
+11,merge_split,mechanism,Swap-only failures are too narrow.,Do merge/split errors matter?,Merge/split family and synthetic suite variants.,pass
+12,occlusion,mechanism,Occlusion drift may be untested.,Does temporal identity drift appear?,Occlusion corridors and domain-shift variants.,pass
+13,hidden_property,mechanism,Hidden mass/property errors may be inaccessible.,Does the paper distinguish observable and hidden truth?,Tiered repair and impossible hidden-mode negative control.,pass
+14,good_control,negative control,High-N may always hurt.,Does a clean scene collapse too?,Good-scene negative control retains utility and low identity error.,pass
+15,law_mc_gap,theory validation,Monte Carlo validation could be loose.,Are exact-law errors small?,Mean MAE 4.63e-4 and max error below threshold.,pass
+16,tie_breaking,theory detail,Tie handling may be underspecified.,Does the law cover equal scores?,Finite tie-aware derivation with score groups.,pass
+17,label_leakage,leakage,Repairs may use evaluation utility.,Can deployable rows see labels?,Tier fields and claim audit forbid real-utility features.,pass
+18,hidden_leakage,leakage,Deployable repair may use hidden truth.,Are hidden features excluded?,No-leak rows must set hidden-feature use false.,pass
+19,oracle_misuse,leakage,Oracle rows may be presented as deployable.,Can upper bounds contaminate claims?,Oracle tier is separated in tables and prose.,pass
+20,hyperparameter_tuning,leakage,Hyperparameters may be tuned on test.,Are final-test conditions held out?,Condition-level pilot/dev/final splits and model-selection records.,pass
+21,candidate_leakage,leakage,Candidate-level split may leak condition info.,Are candidates from same condition split apart?,Nested splits are whole-condition splits.,pass
+22,budget_32_miss,claim strength,No-leak budget 32 misses 70%.,Does the paper inflate the claim?,Main no-leak claim is marked partial at 68.4%.,pass
+23,budget_128,claim strength,Budget sensitivity may be hidden.,What happens at larger pilot budget?,Budget 128 closes 80.2%; budget sweep reported.,pass
+24,support_vs_deployable,claim strength,Support-covered evidence may be over-sold.,Does support-covered become a deployment claim?,Use controlled-support language only.,pass
+25,probe_clean,probe realism,Diagnostic probes may be too clean.,What if probes are noisy?,Noisy-probe reliability stress.,pass
+26,probe_free,probe realism,Probes may be free.,What if probe actions cost utility?,Probe-cost sensitivity through high-cost setting.,pass
+27,deployment_policy,policy,Gate actions may not be evaluated.,Does the policy itself improve utility?,Deployment-gate simulation vs raw and stop-early.,pass
+28,stop_early,baseline,A simple smaller-N fallback may solve it.,Does gate beat stop-early?,Gate beats stop-early by the audited margin.,pass
+29,best_single_repair,ablation,Combined repair may hide one dominant signal.,Does combination beat best single repair?,Repair ablation margin is reported.,pass
+30,seed_fluke,statistics,Seed fluke could drive results.,Are intervals and paired wins reported?,"Paired effects, seed blocks, bootstrap audit.",pass
+31,bootstrap,statistics,Confidence intervals may cross zero.,Do lower bounds pass?,Statistical audit reports positive min CI margins.,pass
+32,calibration_lcb,calibration,LCB coverage may fail in selected tail.,Is selected-tail coverage reported?,Overall and selected-tail LCB coverage table.,pass
+33,block_accuracy,safety,The impossible-case gate may be cosmetic.,Does it block all hidden-mode seeds?,Unidentifiable negative control blocks all split seeds.,pass
+34,learned_too_simple,learned evidence,NumPy model is too simple.,Is it meaningful?,Framed as controlled semi-learned artifact only.,bounded
+35,learned_not_object,learned evidence,Learned heads may not use object information.,Do object feature ablations matter?,No-mass and no-pair ablations lose accuracy.,pass
+36,learned_no_transfer,learned evidence,Learned model may not affect selection.,Does learned scoring transfer?,Identity+reward learned selector beats raw and reward-only.,pass
+37,learned_policy_no_transfer,learned evidence,Learned repair policy may not transfer.,Does policy beat learned selector?,Policy beats raw and learned identity in mean utility.,pass
+38,learned_policy_losses,learned evidence,Policy could have bad tail losses.,Are worst seed losses bounded?,Worst learned-identity seed loss is below threshold.,pass
+39,rank_correlation,learned evidence,Raw learned utility ordering could be weak.,Are rank/generalization diagnostics reported?,"Generalization diagnostics include rank, calibration, repair closure.",pass
+40,domain_shift_learned,learned evidence,Learned model may overfit simple scenes.,Do dense/occluded/crossing variants pass?,Held-out learned domain-shift checks pass.,pass
+41,toy_proxy,comparison,Proxy baselines may be weak.,Does paper over-interpret proxies?,"Toy proxy is only a diagnostic, not SOTA comparison.",bounded
+42,paper_text_drift,audit,Manuscript may drift beyond artifacts.,Is text scanned?,"Claim audit scans README, docs, and paper text.",pass
+43,artifact_missing,reproducibility,Claim artifacts may be missing.,Are files verified?,Artifact verifier and hashes are generated.,pass
+44,heavy_compute,reproducibility,Full run is too expensive for quick checks.,Can reviewers inspect without huge RAM/CPU?,Cached v3 summaries plus smoke/claim audit; full run remains optional.,pass
+45,determinism,reproducibility,PDF/artifacts may be nondeterministic.,Can final PDF be reproduced?,v3 build/audit checks hashes and page count.,pass
+46,source_map,workflow,Desktop PDF may be detached from repo.,Can a fresh agent find the source folder?,Source map and Desktop PDF naming are audited.,pass
+47,figure_overload,presentation,Too many figures may obscure the message.,Is there a synthesis view?,v3 evidence figures summarize panels before appendix details.,pass
+48,main_claim_too_broad,framing,Contribution could sound too broad.,Is scope narrow enough?,Title/abstract emphasize object slots under selection pressure.,pass
+49,limitations_weak,framing,Limitations may be boilerplate.,Are limits concrete and tied to audits?,"Limitations name synthetic scenes, toy proxies, support tiers, hidden modes.",pass
+50,side_by_side_duplicates,novelty,"Placed beside other papers, it may look identical.",Would architecture identity be obvious?,Object-slot vocabulary and failure mechanisms dominate every section.,pass

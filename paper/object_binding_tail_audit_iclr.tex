@@ -8,6 +8,9 @@
 \usepackage{enumitem}
 \usepackage{caption}
 \usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{float}
 
 \hypersetup{
   colorlinks=true,
@@ -16,187 +19,556 @@
   urlcolor=blue
 }
 
-\setlist[itemize]{leftmargin=1.4em,itemsep=0.2em,topsep=0.2em}
+\setlist[itemize]{leftmargin=1.35em,itemsep=0.18em,topsep=0.18em}
 \setlength{\parskip}{0.35em}
 \setlength{\parindent}{0pt}
+\sloppy
 
-\title{\vspace{-1.0em}Object Slots Under Selection Pressure: Auditing Score-Tail Failures in Object-Centric World Models}
+\input{paper/v3_object_results_macros.tex}
+
+\title{\vspace{-1.0em}Object Slots Under Selection Pressure: A Tail Audit for Binding Failures in Object-Centric World Models}
 \author{Anonymous Authors}
-\date{ICLR submission draft}
+\date{Submission-ready v3 draft}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Planning with object-centric world models often ranks many imagined futures and executes the top-scored one. We audit this score-tail operator in controlled 2D manipulation scenes where candidates contain slots, object identities, hidden properties, trajectories, and model scores. If the score rewards plausible object-level futures while real utility depends on the true target object, increasing the candidate budget can amplify binding errors: the selected object score rises while selected real utility stagnates or falls.
+Object-centric world models are attractive for planning because their predictions are organized around persistent entities. The same structure creates a sharp failure mode when a controller samples many object-level futures and executes the candidate with the highest internal score. The selected future can be dynamically smooth, visually plausible, and slot-consistent while being bound to the wrong target object. This paper audits that selected tail in controlled 2D manipulation scenes with explicit slots, identities, occlusions, hidden properties, target/distractor ambiguity, trajectories, and object-level diagnostics.
 
-We make three contributions. First, we give an exact finite, tie-aware law for the expected utility selected by top-score sampling from a finite candidate population, and validate it by Monte Carlo. Second, we instantiate the law with object-centric candidate populations that expose target swaps, merge/split errors, occlusion identity drift, and hidden-property mistakes. Third, we evaluate object-specific repair signals under an explicit claim audit. The evidence separates deployable no-leak pilot-label calibration, support-covered simulator/probe diagnostics, and oracle upper bounds. The strongest audited repair claim is deliberately partial: at budget 32, deployable no-leak lower-confidence selection closes 68.4\% of the raw-to-oracle gap, just below the predeclared 70\% strong threshold, while support-covered repair closes 91.9\% and oracle upper bounds close 100\%. A hidden-mode negative control blocks high-$N$ selection when observables cannot identify the utility mode. The paper is therefore a controlled synthetic study of selected-tail object binding, not a real-robot or broad benchmark claim.
+The contribution is not another generic candidate-budget story. The contribution is an object-binding audit. First, we use an exact finite, tie-aware selected-utility law to make the tail operator measurable on any finite scored candidate population. Second, we instantiate the population with object-centric futures that contain target swaps, merge/split errors, occlusion identity drift, and hidden-property mistakes. In the audited corrupted scenes, raw high-budget selection raises object score by \VThreeRawScoreGain{} while selected real utility drops by \VThreeRawUtilityDrop{} and the selected-tail identity error reaches \VThreeRawIdentityError{}. Third, we evaluate object-specific repairs under leakage tiers. Deployable no-leak pilot-label lower-confidence selection closes \VThreeNoLeakClosure{} of the raw-to-oracle gap at budget 32, which is useful but intentionally marked partial because it misses the predeclared 70\% strong threshold. Support-covered repair closes \VThreeSupportClosure{}, oracle rows close \VThreeOracleClosure{}, and hidden-mode negative controls force the gate to block high-budget selection when observables are insufficient. Fourth, a CPU NumPy semi-learned object-slot artifact verifies that property, identity-alignment, reward, learned selection, and learned repair-policy transfer are measurable inside the same controlled setting. The paper makes no real-robot, broad external-benchmark, or universal-repair claim.
 \end{abstract}
 
 \section{Introduction}
 
-Object-centric world models promise predictions organized around persistent entities rather than undifferentiated pixels or latent vectors. That organization is useful only if the selected future binds the right object. Ranking many candidate futures sharpens this requirement. As the candidate budget grows, the selector concentrates on the upper tail of the model score distribution, exactly where plausible but wrong object bindings can become overrepresented.
+Object-centric prediction changes what a planning error looks like. In a pixel or global-latent model, a bad future may be blurry, inconsistent, or globally implausible. In an object-centric model, a bad future can look coherent because each slot follows an apparently reasonable path. The problem is that coherence is indexed by a slot assignment. If the target identity is wrong, a plausible object future can be the wrong future for control.
 
-This paper asks what happens when object bindings are wrong in the selected tail. A candidate future can look coherent in slot space while swapping the target with a distractor, preserving a trajectory under the wrong identity, merging two objects into one slot, or assuming an incorrect hidden mass. The model score can prefer the candidate because the predicted object state is internally plausible. The controller can still fail because the real utility is evaluated on the true target object.
+This paper studies the case where the controller samples a finite candidate set of imagined futures and selects the top-scored candidate. We call this operation a selected-tail operator because it concentrates the decision on whatever the scoring function makes extreme. When the score rewards object-level plausibility, temporal smoothness, or predicted property confidence, the upper tail can contain futures that look good for the wrong object. The selected candidate may track a distractor, preserve a swapped identity through occlusion, merge two nearby objects, or assume the wrong hidden mass. Real utility is then evaluated on the true target object and can fall even while the object score rises.
 
-The central point is not that large candidate budgets are intrinsically harmful. If score and utility are aligned, drawing more candidates is useful. The point is that top-score selection is a tail operator: it magnifies whatever the score makes easy to select. In object-centric control, the selected tail can be dominated by candidates that are visually and dynamically plausible but semantically misbound.
+The central question is therefore narrow:
 
-We build a CPU-first controlled testbed around this idea. The study has a mathematical layer, a synthetic object-centric layer, a small semi-learned object model, and a claim audit. The finite law predicts selected utility from a scored population. The object-centric generator turns the law into concrete binding failures. Repair selectors test whether identity consistency, hidden-property calibration, diagnostic probes, observable repair scores, and pilot-label lower-confidence bounds reduce selected-tail hallucination. The audit prevents the repair story from depending on evaluation labels or hidden truth features.
+\begin{quote}
+When an object-centric world model ranks many candidate futures, does the selected tail bind to the right object, and can object-specific diagnostics reduce failure without leaking evaluation utility?
+\end{quote}
 
-Our contributions are:
+This framing matters because it separates our paper from architecture-agnostic candidate-budget analyses. The mathematical law used here is generic by design; it is a measuring device. The empirical object of study is not the law itself but the slot-level population on which the law acts: target identity, distractor similarity, occlusion, merge/split structure, hidden properties, and object repair signals.
+
+The repository implements a CPU-first controlled testbed. Candidate futures are generated for small 2D manipulation scenes with multiple objects. Each candidate has a model score, a real utility against the true target, predicted slot identities, trajectories, hidden-property estimates, uncertainty diagnostics, and flags describing failure families. The study includes raw selection, identity-consistency repair, hidden-property calibration, targeted probes, observable-only repair, combined repair, pilot-label lower-confidence selection, conservative deployment gates, toy proxy selectors, and a small learned object-slot model.
+
+Our claims are intentionally tiered. Controlled support-covered diagnostics can be useful for understanding failure mechanisms, but they are not deployment proof. Oracle rows are upper bounds for interpreting regret. Deployable no-leak rows may use generated futures, model scores, generated uncertainty, and pilot labels from held-out calibration conditions; they cannot use evaluation real utility, all-candidate labels, or hidden truth features. This discipline is not cosmetic. It changes the strength of the repair claim: a legacy combined-repair panel is very strong, but the strict no-leak nested final-test row at budget 32 closes \VThreeNoLeakClosure{} of the gap and is therefore reported as partial.
+
+\paragraph{Contributions.}
+The v3 manuscript makes five contributions:
 \begin{itemize}
-  \item an exact finite, tie-aware selected-utility law for arbitrary scored candidate populations;
-  \item controlled object-centric evidence that high-$N$ selection can raise selected score while lowering selected real utility through binding failures;
-  \item tiered repair evidence that separates deployable no-leak calibration, support-covered diagnostic proxies, and oracle upper bounds;
-  \item a CPU NumPy semi-learned object-centric artifact with transition, hidden-property, reward, identity-alignment, learned selection, and conservative learned repair-policy checks;
-  \item executable claim auditing that marks unsupported claims, including real-robot validation, broad benchmark superiority, and universal repair, as unsupported.
+  \item a finite, tie-aware law for expected selected utility under top-score selection, used as an audit equation rather than as an architecture claim;
+  \item a controlled object-centric candidate generator that exposes target swaps, occlusion drift, merge/split binding errors, and hidden-property mistakes;
+  \item selected-tail evidence showing that raw high-budget selection can increase selected object score while lowering selected real utility, with dense, extreme-count, retargeting, domain-randomized, and synthetic-suite stress panels;
+  \item leakage-separated repair evidence across deployable no-leak, support-covered, and oracle tiers, including pilot calibration, noisy-probe, probe-cost, leave-one-failure, and deployment-gate checks;
+  \item a CPU NumPy semi-learned object-slot artifact showing that learned property, identity, reward, learned selection, and learned repair-policy signals transfer within controlled synthetic variants.
 \end{itemize}
 
-\section{Selected-Utility Law}
+\paragraph{Claim boundary.}
+This is a controlled synthetic paper. It does not claim real-robot validation, broad benchmark superiority over graph physics, latent dynamics, diffusion, or other external world-model families, or universal recovery. Those nonclaims are part of the audit surface because a reviewer should not have to infer them from omissions.
 
-Let $\mathcal{C}=\{c_i\}_{i=1}^{M}$ be a finite candidate population. Each candidate has a score $s_i$ and a real utility $u_i$. A top-score selector samples $N$ candidates independently from a base distribution over $\mathcal{C}$ and returns one of the candidates with maximal score. Ties are broken uniformly within the maximal-score tie group.
+\section{A Selected-Utility Law for Object-Tail Audits}
 
-Group candidates by distinct score values $g=1,\ldots,G$ sorted from high to low. Let $p_g$ be the base probability mass of group $g$, $q_g=\sum_{h>g} p_h$ be the probability mass of lower-scoring groups, and $\bar{u}_g$ be the expected utility within group $g$ under the tie-breaking distribution. The probability that the selected candidate lies in group $g$ is
+Let $\mathcal{C}=\{c_i\}_{i=1}^{M}$ be a finite candidate population. Each candidate has a score $s_i$, real utility $u_i$, and object metadata $z_i$ containing the slot identity, predicted target, trajectory, hidden-property estimate, and diagnostics. A selector samples $N$ candidates independently from a base distribution over $\mathcal{C}$ and returns a candidate with maximal score. Ties are broken uniformly within the maximal-score tie group.
+
+Group candidates by distinct score values $g=1,\ldots,G$ sorted from high to low. Let $p_g$ be the base probability mass of score group $g$, let $q_g=\sum_{h>g}p_h$ be the probability mass of lower-scoring groups, and let $\bar{u}_g$ be the expected real utility within group $g$ under the tie-breaking distribution. The selected group is $g$ if at least one sampled candidate falls in group $g$ and no sampled candidate falls in a higher group. Thus
 \begin{equation}
-  \Pr[\hat{g}=g] = (p_g + q_g)^N - q_g^N.
+  \Pr[\hat{g}=g] = (p_g+q_g)^N - q_g^N,
 \end{equation}
-The expected selected utility is therefore
+and
 \begin{equation}
   \mathbb{E}[u_{\mathrm{sel}}(N)] =
-  \sum_{g=1}^{G} \left((p_g+q_g)^N - q_g^N\right)\bar{u}_g.
+  \sum_{g=1}^{G} \left((p_g+q_g)^N-q_g^N\right)\bar{u}_g.
+  \label{eq:selected-utility}
 \end{equation}
 
-This expression is intentionally model-agnostic. Object-centric structure enters through the definition of $(s_i,u_i)$. A candidate can score well because its slots are smooth, its predicted object properties are plausible, or its trajectory is dynamically coherent. It can still have low utility if the selected future is bound to the wrong object.
+Equation~\ref{eq:selected-utility} is deliberately agnostic to object structure. The object-centric content enters through the joint population $(s_i,u_i,z_i)$. In this paper, $s_i$ is allowed to reward slot smoothness, object-score plausibility, predicted target confidence, and property consistency. Real utility $u_i$ is evaluated by the true target identity in the scene. The mismatch between a high score and the true target utility is exactly the object-binding failure.
 
-\section{Controlled Object-Centric Setting}
+The law is useful for three reasons. First, it predicts selected real utility without relying on asymptotics or continuous-score assumptions. Second, it exposes the selected tail as a distributional property of score groups: if high-score groups contain misbound slots, increasing $N$ concentrates decisions there. Third, it lets the paper compare raw, repaired, learned, and oracle selectors on the same finite population. The audited exact-law validation reports mean absolute error \VThreeExactMeanMae{} and maximum absolute error \VThreeExactMaxError{}, so numerical mismatch is not the limiting factor in the conclusions.
 
-The synthetic scenes are 2D manipulation settings with multiple objects. Candidate futures contain predicted slots, object identities, hidden-property estimates, trajectories, an object score, and real utility measured against the true target object. Failure families include target swaps, merge/split errors, occlusion-induced identity drift, hidden-property mistakes, and combined corrupted raw scenes. Good-scene controls test whether the same high-$N$ collapse appears when binding pressure is low.
+\paragraph{Object-specific interpretation.}
+For object-centric futures, the selected score group has a semantic type. A group may consist mainly of correctly bound target futures, or it may consist mainly of distractor-bound futures that look smooth. The same equation covers both cases, but the scientific interpretation changes. The selected utility falls when $\bar{u}_g$ is low for the score groups that dominate $(p_g+q_g)^N-q_g^N$. Our experiments measure whether object identity errors, property errors, occlusion errors, and merge/split errors explain those low-utility groups.
 
-The learned artifact is deliberately small: a CPU NumPy model trained on generated slot trajectories. It learns linear transition, hidden-property, identity-alignment, and reward predictors from slot and slot-pair features. The goal is not to claim a modern object-centric architecture. The goal is to verify that object-level information can be learned and used in the same controlled setting, including held-out dense, occluded, crossing, mixed object-count, learned selection, and learned repair-policy panels.
+\section{Controlled Object-Centric Candidate Populations}
+
+\subsection{Scenes, Slots, and Targets}
+
+Each scene contains a target object and several distractors in a planar manipulation setting. Objects have positions, velocities, identity labels, visible cues, and hidden properties such as mass-like modes. The candidate future stores a set of slots. A slot can represent the target correctly, represent a distractor as the target, merge nearby objects, split one object into multiple hypotheses, or preserve a wrong identity through an occlusion interval. The score is computed from generated object features; real utility is computed from the true target object.
+
+This design creates a controlled version of a common planning hazard. A future may be coherent under its own slot assignment but harmful under the task identity. The paper therefore reports both selected object score and selected real utility. Reporting only score would hide the failure. Reporting only utility would hide the mechanism. Reporting the object-real gap, identity error, swap rate, property error, and occlusion error makes the selected tail auditable.
+
+\subsection{Failure Families}
+
+The generator produces several failure families:
+\begin{itemize}
+  \item \textbf{Target swap}: the candidate follows a distractor that resembles the target or crosses near the target.
+  \item \textbf{Occlusion drift}: the target disappears behind clutter and the predicted identity reappears attached to another object.
+  \item \textbf{Merge/split}: nearby objects are merged into one slot or one object is split into competing slots.
+  \item \textbf{Hidden-property error}: the visible state is plausible but the hidden mass-like property is wrong, changing real utility.
+  \item \textbf{Mixed raw corruption}: multiple families occur together, producing a high-score but low-utility selected tail.
+\end{itemize}
+
+The stress panels vary object count, target identity, occlusion, crossing, domain randomization, benchmark-style synthetic variants, probe reliability, probe cost, and pilot-label budgets. These panels are still synthetic. Their purpose is to prevent a one-template result, not to imply external robotic coverage.
+
+\subsection{Selectors}
+
+The primary raw selector returns the highest model-score candidate from a budget $N$. Repair selectors modify the ranking by adding object identity consistency, property calibration, diagnostic probes, or observable repair scores. The combined repair stack is an upper controlled diagnostic because it uses support that may not be available at deployment. The deployable no-leak selector trains a lower-confidence utility rule from pilot labels and generated observable features, then evaluates on held-out final-test conditions.
+
+We also include learned selectors. A CPU NumPy object-slot model learns transition, hidden-property, identity-alignment, and reward heads from generated slot trajectories. The learned reward-only selector tests whether reward prediction alone is enough. The learned identity+reward selector tests whether identity-alignment information improves selected-tail behavior. A learned repair policy uses observable diagnostics plus learned heads and selects with a conservative blend of ridge utility, learned identity-reward, and normalized observable repair. These learned components are intentionally small and auditable.
 
 \section{Repair Tiers and Leakage Control}
 
-Repair evidence is separated into three tiers:
+The most important methodological detail is the repair tier. The paper uses the following labels throughout:
 \begin{itemize}
-  \item \textbf{Deployable no-leak}: generated futures, model scores, generated uncertainty features, and pilot labels only. These rows cannot use evaluation real utility, all-candidate labels, oracle residuals, or hidden truth features.
-  \item \textbf{Support-covered}: simulator-visible diagnostic or probe proxies that do not directly use evaluation real utility, but still rely on controlled-environment support.
-  \item \textbf{Oracle upper bound}: all-candidate labeled selectors, hidden-truth features, or evaluation real-utility access. These rows are interpretive upper bounds, not deployment evidence.
+  \item \textbf{Deployable no-leak}: generated futures, model scores, generated uncertainty features, and pilot labels from held-out calibration conditions. No evaluation real utility, all-candidate labels, or hidden truth features are allowed.
+  \item \textbf{Support-covered}: simulator-visible or probe-supported diagnostics that are useful for controlled mechanism analysis but require support beyond the no-leak setting.
+  \item \textbf{Oracle upper bound}: all-candidate labels, hidden-truth features, evaluation utility, or direct oracle access. These rows are only upper bounds.
 \end{itemize}
 
-Nested repair evaluation splits whole conditions, not candidates from the same condition, into pilot train, pilot calibration, dev, and final-test sets. A small fixed grid over ridge strength, uncertainty penalty, conformal confidence, and gate thresholds is selected on dev conditions only. Final-test robustness is reported across five split seeds. Result tables carry tier, real-utility-feature usage, hidden-feature usage, hyperparameter source, split seed, and final-test flags.
+The nested repair evaluation splits whole conditions into pilot train, pilot calibration, dev, and final-test sets. Splitting candidates within the same condition would leak condition-level structure, so it is not used. A fixed grid over ridge strength, uncertainty penalty, conformal confidence, and gate thresholds is selected on dev conditions only. The final-test tables carry split seed, final-test flag, repair budget, tier, real-utility-feature usage, hidden-feature usage, and hyperparameter source.
 
-The conservative gate also includes an adversarial negative control: paired candidates can have identical observable/generated features but different hidden real utility. No selector using those observables can guarantee recovery. In this setting the adaptive gate must block high-$N$ selection with a hidden-mode or tail-rank failure reason.
+The lower-confidence selector is deliberately conservative. It estimates candidate utility from observable features and subtracts a conformal residual quantile. The audit reports \VThreeLCBCoverage{} overall lower-confidence coverage and selected-tail coverage separately. The hidden-mode negative control creates paired candidates with identical observable generated features but different hidden real utility. In that setting, no observable selector can guarantee recovery. The correct behavior is to block high-budget selection with a hidden-mode or tail-rank failure reason, not to claim repair.
 
-\section{Experiments}
+\begin{table}[t]
+  \centering
+  \caption{Evidence tiers used in the paper. The same numeric outcome has a different claim status depending on what information the selector was allowed to use.}
+  \label{tab:tiers}
+  \begin{tabular}{p{0.18\linewidth}p{0.31\linewidth}p{0.22\linewidth}p{0.19\linewidth}}
+    \toprule
+    Tier & Allowed information & Disallowed information & Claim use \\
+    \midrule
+    Deployable no-leak & generated futures, model score, generated uncertainty, pilot labels & evaluation utility, hidden truth, all-candidate labels & deployment-style evidence \\
+    Support-covered & controlled probes, simulator-visible diagnostics, observable repair signals & evaluation utility as a feature & mechanism and support evidence \\
+    Oracle upper bound & labeled candidates or hidden truth & none by definition & regret upper bound only \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
-The experiments are designed around one question: does score-selected sampling improve control, or does it select a misleading object-centric tail? We evaluate raw top-score selection, repair selectors, learned selectors, stress panels, and audits. The primary $N$ values are $\{1,2,4,8,16,32,64\}$.
+\section{Experimental Evidence}
+
+\subsection{Evidence Map}
+
+The repository contains the raw tables, generated figures, claim-status files, and deterministic artifact hashes. Figure~\ref{fig:v3-scorecard} summarizes the main audit values. Table~\ref{tab:v3-scorecard} gives the claim-to-artifact scorecard that the v3 paper uses as a guardrail.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.95\linewidth]{figures/figure1_selected_tail_binding_failure.png}
-  \caption{Selected-tail binding failure. In corrupted object-centric scenes, high-$N$ selection raises model score while selected real utility falls because the selected candidate is often bound to the wrong object.}
+  \includegraphics[width=0.92\linewidth]{figures/figure32_v3_evidence_scorecard.png}
+  \caption{V3 evidence scorecard. The exact-law error is small; the dominant empirical signal is that raw high-budget selection increases score while producing severe identity error and lower real utility in corrupted object-centric scenes.}
+  \label{fig:v3-scorecard}
+\end{figure}
+
+\input{paper/v3_scorecard_table.tex}
+
+\subsection{RQ1: Raw Selection Amplifies Object Binding Errors}
+
+The main corrupted panel shows the expected selected-tail pattern. Raw high-budget selection raises selected object score by \VThreeRawScoreGain{} while selected real utility drops by \VThreeRawUtilityDrop{}. The selected-tail identity error reaches \VThreeRawIdentityError{}. The top raw-score calibration bin has a large object-real gap and high identity error, meaning the score is not merely noisy: it is selecting a semantically wrong object tail.
+
+Figure~\ref{fig:tail} shows the primary failure panel. The useful detail is not just that utility falls. It is that object score and real utility move in opposite directions. This makes the failure invisible to a planner that monitors only the model score. The good-scene control is also important. When binding pressure is low, raw high-budget utility remains \VThreeGoodControlUtility{} with identity error 0.125, and the good-minus-corrupted high-budget utility gap is \VThreeGoodMinusCorrupted{}. High budget is therefore not intrinsically bad. It is bad when the score tail is misbound.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/figure1_selected_tail_binding_failure.png}
+  \caption{Selected-tail binding failure. Object score rises in the corrupted tail while selected real utility falls because the selected future is often bound to the wrong object.}
   \label{fig:tail}
 \end{figure}
 
-\subsection{Selected-tail failure}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/figure10_score_calibration.png}
+  \caption{Raw-score calibration. The top score bin has high object-real gap and high identity error, tying the utility drop to object binding rather than only random score noise.}
+  \label{fig:calibration}
+\end{figure}
 
-The exact law matches Monte Carlo selected utility with mean absolute error $4.63\times 10^{-4}$. In corrupted object-centric scenes, raw high-$N$ selection increases selected object score by 0.576 while selected real utility drops by 0.364. The selected-tail identity error reaches 1.0 in the audited main failure panel. Score calibration shows the top raw-score bin has an object-real gap of 1.095 and identity error of 0.941. Good-scene controls avoid the same collapse: raw high-$N$ utility is 0.655 with identity error 0.125, and the good-minus-corrupted raw high-$N$ utility gap is 0.608.
+\subsection{RQ2: The Failure Survives Object-Centric Stress}
 
-The failure is not confined to one scene template. Dense OOD, extreme 10/12-object, target-identity sweep, counterfactual target-swap, domain-randomized, and benchmark-style synthetic task-suite panels all reproduce raw selected-tail collapse under corrupted conditions. For example, the synthetic task-suite raw mean utility is 0.019 with identity error 0.982.
+The stress evidence asks whether the result is a single hand-picked scene. It is not. Dense 6/8-object corrupted panels have raw mean utility \VThreeDenseRawUtility{}; extreme 10/12-object panels have raw mean utility \VThreeExtremeRawUtility{}; the target-identity sweep has raw mean utility \VThreeTargetSweepRawUtility{} and identity error 1.0; and the benchmark-style synthetic suite has raw mean utility \VThreeSuiteRawUtility{} with identity error 0.982. These numbers do not make the study a broad external benchmark. They show that the controlled failure is not tied to one target label, one object count, or one corruption family.
 
-\subsection{Repair evidence}
+Figure~\ref{fig:v3-stress} compresses the stress panels. The repeated pattern is that raw high-budget selection is low-utility in corrupted scenes, while object-aware repair or gating recovers utility inside the controlled support assumptions. The suite includes dense clutter, retargeting, crossing swaps, occlusion corridors, hidden-mass probing, merge/split clutter, and mixed raw variants.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.95\linewidth]{figures/figure10_repair_robustness.png}
-  \caption{Nested final-test repair robustness across split seeds. Deployable no-leak, support-covered, and oracle rows are plotted separately so reviewer-visible claims cannot mix deployment evidence with upper-bound evidence.}
-  \label{fig:repair-robustness}
+  \includegraphics[width=0.95\linewidth]{figures/figure34_v3_stress_scope.png}
+  \caption{Stress scope. Dense, extreme, domain-randomized, counterfactual-target, target-sweep, suite, and gate panels reproduce the raw selected-tail failure and controlled recovery.}
+  \label{fig:v3-stress}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/figure27_target_identity_sweep.png}
+  \caption{Target-identity sweep. The true target is varied over six identities, showing that the failure is not hard-coded to object zero.}
+  \label{fig:target-sweep}
+\end{figure}
+
+\subsection{RQ3: Repair Works When Its Information Tier Is Honest}
+
+The strongest controlled repair panels are large. Combined repair improves selected utility over raw by \VThreeCombinedGain{} with win rate 1.0. Observable repair has raw gain \VThreeObservableGain{} and remains close to combined repair in the main panel. Domain-randomized combined repair improves over raw by \VThreeDomainGain{}, counterfactual-target repair by \VThreeCounterfactualGain{}, target-sweep repair by \VThreeTargetSweepGain{}, and synthetic-suite repair by \VThreeSuiteGain{}. These are strong controlled diagnostics.
+
+The stricter no-leak final-test result is more modest. At budget 32, deployable no-leak pilot-label lower-confidence selection closes \VThreeNoLeakClosure{} of the raw-to-oracle gap. Because the predeclared strong threshold is 70\%, the claim is partial. At the larger budget it closes \VThreeNoLeakLargeBudgetClosure{}. Support-covered repair closes \VThreeSupportClosure{} at budget 32 and budget 128. Oracle rows close \VThreeOracleClosure{}. Figure~\ref{fig:v3-tiers} makes this separation visible.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/figure33_v3_repair_tiers.png}
+  \caption{Repair tiers. The budget-32 no-leak row is useful but partial; support-covered and oracle rows are stronger but must not be treated as deployable proof.}
+  \label{fig:v3-tiers}
 \end{figure}
 
 \begin{table}[t]
   \centering
-  \caption{Audited repair tiers. Gap closure is measured relative to raw and oracle selected real utility on held-out final-test conditions.}
+  \caption{Selected repair results. Gap closure is measured relative to raw and oracle selected utility on held-out final-test conditions.}
   \label{tab:repair}
-  \begin{tabular}{lccc}
+  \begin{tabular}{p{0.27\linewidth}p{0.16\linewidth}p{0.20\linewidth}p{0.27\linewidth}}
     \toprule
-    Evidence tier & Budget & Mean gap closure & Claim use \\
+    Evidence tier & Budget & Gap closure / gain & Paper interpretation \\
     \midrule
-    Deployable no-leak & 32 & 68.4\% & partial deployment evidence \\
-    Deployable no-leak & 128 & 80.2\% & stronger budgeted evidence \\
-    Support-covered & 32 & 91.9\% & controlled supported evidence \\
-    Support-covered & 128 & 91.9\% & controlled supported evidence \\
-    Oracle upper bound & -- & 100.0\% & non-deployable upper bound \\
+    Deployable no-leak LCB & 32 & \VThreeNoLeakClosure{} gap closure & partial; below strong threshold \\
+    Deployable no-leak LCB & 128 & \VThreeNoLeakLargeBudgetClosure{} gap closure & stronger budgeted no-leak evidence \\
+    Support-covered repair & 32 & \VThreeSupportClosure{} gap closure & controlled diagnostic support \\
+    Oracle upper bound & -- & \VThreeOracleClosure{} gap closure & non-deployable upper bound \\
+    Combined controlled repair & 64 & \VThreeCombinedGain{} raw gain & mechanism evidence \\
+    Observable repair & 64 & \VThreeObservableGain{} raw gain & observable-diagnostic evidence \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Earlier controlled combined-repair panels are strong: at $N=64$, combined repair improves selected utility over raw by 0.880 with win rate 1.0, and observable-only repair achieves the same raw-to-repair gain in the main raw panel. However, the nested no-leak final-test audit is stricter. Deployable no-leak pilot-label lower-confidence selection at budget 32 closes 68.4\% of the raw-to-oracle gap, just below the predeclared 70\% threshold for a strong claim. The audit therefore marks the main repair claim as partial. This is the intended behavior: the paper reports useful no-leak evidence without upgrading it beyond its threshold.
+\subsection{RQ4: Learned Object Information Matters Inside the Controlled Setting}
 
-Support-covered repair clears the stronger controlled threshold, closing 91.9\% of the gap at budgets 32 and 128. Oracle upper bounds close 100\%. Calibration diagnostics report overall lower-confidence-bound coverage of 95.8\%, with selected-tail coverage of 87.0\%. The hidden-mode negative control blocks high-$N$ selection in all five split seeds, so the system refuses cases where observables cannot identify the utility mode.
+The learned artifact is intentionally small. It is a CPU NumPy object-slot model with transition, hidden-property, identity-alignment, and reward heads. It is not presented as a modern large-scale object-centric architecture. The purpose is to test whether object information remains measurable after learning from generated trajectories.
 
-\subsection{Learned object-centric evidence}
+The learned metrics pass the audit: property margin \VThreePropertyMargin{}, identity-alignment margin \VThreeIdentityMargin{}, reward correlation \VThreeRewardCorrelation{}, and transition MSE ratio below the threshold. Held-out dense, occluded, crossing, and mixed object-count variants retain the required margins. The learned identity+reward selector improves mean utility over raw by \VThreeLearnedSelectionGain{} and over reward-only by \VThreeLearnedIdentityOverReward{}. The learned repair policy improves over raw by \VThreeLearnedRepairRawGain{} and over learned identity+reward by \VThreeLearnedRepairIdentityGain{}, while worst learned-identity seed loss remains \VThreeLearnedWorstLoss{}.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.95\linewidth]{figures/figure7_learned_object_model.png}
-  \caption{CPU NumPy learned object-centric artifact. The learned model is used as controlled synthetic evidence for transition, hidden-property, reward, and identity-alignment prediction, not as a broad benchmark model.}
-  \label{fig:learned}
+  \includegraphics[width=0.92\linewidth]{figures/figure35_v3_learned_transfer.png}
+  \caption{Learned object-centric transfer checks. Learned identity information improves selected-tail behavior, and the learned repair policy remains conservative relative to the learned identity+reward selector.}
+  \label{fig:v3-learned}
 \end{figure}
 
-The CPU NumPy model improves property accuracy to 0.996 versus a 0.75 baseline, identity-alignment accuracy to 0.988 versus a 0.5 baseline, and transition MSE to 0.007 of the constant-transition baseline. Reward correlation is 0.953. Held-out domain-shift checks retain a minimum property margin of 0.125, minimum identity margin of 0.446, and minimum reward correlation of 0.916.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/figure31_learned_repair_policy_transfer.png}
+  \caption{Learned repair-policy transfer. The policy uses observable diagnostics plus learned heads and is evaluated on held-out benchmark-style synthetic variants.}
+  \label{fig:learned-policy}
+\end{figure}
 
-Learned top-score selection also benefits from identity information. The learned identity+reward selector improves mean utility over raw by 0.658 and over reward-only selection by 0.360. A conservative learned repair policy trained from observable diagnostics plus learned heads reaches mean utility 0.846, improves over raw by 0.823, improves over learned identity+reward by 0.225, and keeps worst learned-identity seed loss bounded at 0.142. These are still synthetic transfer results, not evidence of external robotic performance.
+\subsection{RQ5: Deployment Frictions Are Measured Rather Than Ignored}
 
-\subsection{Stress and deployment-style checks}
+The paper includes several frictions that reviewers often ask about. A conservative deployment-gate simulation maps risk states to raw high-budget selection, stop-early fallback, observable repair, targeted probing, or combined repair. On corrupted scenarios the gate improves over raw by \VThreeGateRawGain{} and over stop-early by \VThreeGateStopGain{}, with minimum win rate 0.938. Held-out pilot calibration improves over raw by \VThreePilotGain{}. Leave-one-failure-out calibration improves by \VThreeLeaveOneGain{}. Noisy-probe reliability gives gain \VThreeNoisyProbeGain{}. Probe-cost stress keeps positive high-cost gain \VThreeProbeHighGain{}. A toy proxy panel gives combined-vs-best-proxy margin \VThreeToyProxyGain{}, but this is only a controlled diagnostic comparison.
 
-The stress panels ask whether the main observation survives perturbations that a reviewer would naturally try. Combined repair retains mean selected utility 0.849 in the high-$N$ stress panel, 0.877 in dense OOD stress, 0.870 in extreme object-count stress, and 0.835 in the benchmark-style synthetic task suite. Domain-randomized combined repair improves over raw by 0.834. Target-identity sweep combined repair improves over raw by 0.810. Probe-cost sensitivity remains positive even when diagnostic actions are charged; the max-cost combined-vs-raw gain is 0.517.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/figure36_v3_deployment_friction.png}
+  \caption{Deployment-friction diagnostics. Pilot labels, noisy probes, probe costs, deployment gating, and toy proxy comparisons are measured as controlled stress tests, not as external deployment evidence.}
+  \label{fig:v3-deployment}
+\end{figure}
 
-A deployment-gate simulation compares raw high-$N$, raw stop-early fallback, conservative gate-selected repair/probe actions, and oracle. On corrupted scenarios, the gate improves over raw by 0.788 and over stop-early by 0.537, with minimum win rate 0.938. This is a policy simulation inside the controlled generator; it is useful as failure-detection evidence, not as deployed robotics evidence.
+\section{Self-Attack Summary}
 
-\section{Discussion}
+Before finalizing v3, the paper is attacked along 50 reviewer angles. The attacks are machine-readable in \texttt{results/tables/v3\_object\_centric\_attack\_ledger.csv} and rendered in Appendix~\ref{app:attack}. Four rows are bounded limitations rather than pass/fail evidence: the law is generic, the experiments are synthetic, the learned model is intentionally simple, and toy proxies are diagnostic rather than external benchmarks. Those limitations are not hidden; they define the allowed scope of the claims.
 
-The results support a simple view: score-tail selection is not inherently reliable or unreliable. It is a selection amplifier. When score and utility agree, the amplifier helps. When score rewards object-centric plausibility while utility requires correct target binding, the amplifier can select the wrong tail. That failure is mathematically predictable from the finite scored population and experimentally visible in controlled object-centric candidates.
+Figure~\ref{fig:v3-attack} summarizes the attack coverage. The important change from the short draft is that the paper no longer waits until the limitations section to admit boundary conditions. The abstract, method, experiments, repair tables, and appendix all separate controlled support from unsupported claims.
 
-The repair results are deliberately tiered. Older combined-repair panels show large controlled gains, but the stricter nested final-test audit asks a different question: what remains when deployment-like rows cannot use hidden truth or evaluation real utility? The answer is useful but bounded. At modest pilot budget, no-leak repair nearly clears the strong threshold but does not clear it. At larger pilot budget it improves substantially. Support-covered and oracle tiers show what is possible when more diagnostic support or forbidden information is available.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/figure37_v3_attack_coverage.png}
+  \caption{Self-attack coverage by reviewer angle. The ledger forces the manuscript to answer novelty, leakage, overclaim, stress, learned-evidence, and reproducibility attacks explicitly.}
+  \label{fig:v3-attack}
+\end{figure}
 
-This distinction is important for review. The paper does not need to claim that a small synthetic repair stack solves object-centric control. Its cleaner contribution is to isolate a selected-tail failure mode, give a law that predicts it, and demonstrate an audit discipline that prevents repair evidence from leaking across tiers.
+\section{Related Work}
+
+Object-centric representation learning studies how scenes can be decomposed into entities or slots, with examples including MONet and iterative object-centric inference. Graph networks and relational inductive biases motivate entity-level dynamics and relational reasoning. World-model planning methods such as latent dynamics, model-based reinforcement learning, and planning with learned models show why imagined futures are useful for control. Diffusion and other generative world models further motivate sampling many candidates from a learned predictive model.
+
+This paper uses that context but asks a different question. It does not compare against external graph, latent, diffusion, or robot benchmarks. It audits a selection failure that appears when object-centric candidate futures are ranked by a score that can prefer plausible but wrong bindings. The toy proxy panel is therefore included only to make the diagnostic comparison less insular. It is not a broad benchmark result.
+
+The repair-tier discipline is related to concerns about evaluation leakage, calibration, and selective prediction. In this paper those concerns are operationalized by table columns and claim-audit code. Rows that use hidden truth or evaluation utility are labeled oracle upper bounds. Rows that use controlled probes are support-covered. Only no-leak rows with pilot labels and generated observable features are allowed to support deployment-style language.
 
 \section{Limitations}
 
-All scenes are synthetic and small relative to real manipulation. The added dense-object, extreme object-count, domain-randomized, target-swap, target-sweep, benchmark-style synthetic, deployment-gate, pilot-calibration, noisy-probe, probe-cost, nested final-test, and hidden-mode panels broaden the controlled evidence but do not make it a real-robot study.
+The evidence is controlled and synthetic. The scenes include dense clutter, extreme object counts, domain randomization, target retargeting, occlusion, crossing, hidden properties, merge/split failures, pilot labels, noisy probes, and probe costs, but they remain generated scenes. The paper has no real-robot experiments and no external manipulation benchmark.
 
-The learned model is a CPU NumPy semi-learned artifact, not a modern large-scale object-centric model. The toy model-family proxy diagnostics do not establish superiority over graph physics, latent dynamics, diffusion world models, or external benchmarks. The repair selectors use controlled generator diagnostics, and support-covered rows rely on simulator-visible proxies. Oracle rows are non-deployable by definition.
+The CPU NumPy learned model is a semi-learned audit artifact, not a claim about state-of-the-art object-centric modeling. Its value is that object information can be learned and then used in selected-tail scoring inside the controlled setting. It does not establish performance for modern large-scale architectures.
 
-Finally, no method using identical observable features can guarantee recovery when hidden modes change real utility. The negative control makes this explicit: the correct behavior is to block high-$N$ selection, not to promise universal repair.
+The repair story is bounded. Support-covered repair is strong in controlled settings but may rely on simulator-visible diagnostics or controlled probes. Oracle rows are upper bounds. No-leak pilot-label selection at budget 32 is partial by the predeclared threshold. The hidden-mode negative control shows that observably identical candidates with different hidden utilities cannot be universally repaired. In those cases, the correct output is to block high-budget selection.
+
+\section{Reproducibility}
+
+The repository is CPU-first. The full experiment suite is available, but v3 paper generation uses cached audited artifacts to avoid unnecessary CPU and RAM load. The key commands are:
+\begin{verbatim}
+python scripts/prepare_v3_evidence.py
+bash scripts/build_iclr_paper.sh
+python scripts/run_v3_claim_audit.py
+\end{verbatim}
+The standard claim audit remains:
+\begin{verbatim}
+bash scripts/run_claim_audit.sh
+pytest
+\end{verbatim}
+The full canonical experiment run is intentionally separate because it is much heavier. Cached v3 evidence is acceptable only because the claim audit verifies the tables, figures, JSON summaries, text boundaries, and artifact manifest.
 
 \section{Conclusion}
 
-Score-tail selection over object-centric world-model futures can fail by selecting the most plausible wrong object. The exact finite law explains selected utility as a property of the score/utility population; the controlled experiments show how binding failures enter that population; the repair audit separates deployable, support-covered, and oracle evidence. The result is a narrow but useful message: selected-tail object binding deserves first-class evaluation before large candidate budgets are treated as a generic control improvement.
+Score-tail selection over object-centric world-model futures can select the most plausible wrong object. The selected-utility law gives a finite audit equation; the controlled object-centric generator exposes how target swaps, occlusion drift, hidden-property errors, and merge/split mistakes enter the high-score tail; the repair tiering prevents hidden or evaluation information from being sold as deployment evidence. The result is a narrow but submission-ready claim: object binding must be audited as a first-class selected-tail risk before large candidate budgets are treated as a generic planning improvement.
 
-\begin{table}[t]
+\clearpage
+\appendix
+
+\section{Derivation Details}
+\label{app:law}
+
+For completeness, we restate the finite selected-utility derivation. Sort distinct score values from high to low. Let $A_g$ be the event that no sampled candidate has score in a group above $g$ and at least one sampled candidate has score in group $g$. If $q_g$ is the probability mass below $g$ and $p_g$ is the probability mass at $g$, then
+\[
+  \Pr[A_g] = \Pr[\textrm{all samples are in }g\textrm{ or below}]
+             - \Pr[\textrm{all samples are below }g]
+           = (p_g+q_g)^N-q_g^N.
+\]
+Within group $g$, uniform tie-breaking gives mean utility $\bar{u}_g$. Summing over mutually exclusive selected-score groups gives Equation~\ref{eq:selected-utility}.
+
+The binary-utility version follows by replacing $\bar{u}_g$ with the probability of success within the selected tie group. The law makes no monotonicity assumption. If higher score groups have lower real utility, expected selected utility can decrease with $N$. If higher score groups have higher real utility, increasing $N$ can help. The object-centric generator creates both cases: good controls where score and utility are aligned, and corrupted settings where high score is tied to wrong object binding.
+
+\section{Generator and Candidate Details}
+\label{app:generator}
+
+Each candidate future records:
+\begin{itemize}
+  \item slot positions and velocities across a short horizon;
+  \item predicted target slot identity and target confidence;
+  \item object score, real utility, candidate mean score, candidate mean utility, and oracle utility;
+  \item identity error, swap rate, merge/split rate, property error, property entropy, occlusion error, and object-real gap;
+  \item repair-tier fields and leakage flags;
+  \item condition identifiers, split seeds, final-test flags, and repair budgets.
+\end{itemize}
+
+The corrupted raw setting intentionally makes high-score candidates plausible. A target swap can have smooth kinematics. An occlusion drift can preserve temporal consistency under the wrong identity. A hidden-property error can look visually correct while changing utility. A merge/split error can improve slot compactness while losing the target. These are not arbitrary noise injections; they are object-centric failure modes.
+
+\begin{figure}[H]
   \centering
-  \caption{Claim audit summary. Positive claims are kept inside their audited support; boundary claims remain unsupported and explicit.}
-  \label{tab:claims}
-  \begin{tabular}{lll}
-    \toprule
-    ID & Claim family & Audit status \\
-    \midrule
-    C1 & finite tie-aware score-tail law & strongly supported \\
-    C2 & controlled selected-tail binding failure & strongly supported \\
-    C3 & tiered repair evidence & partial \\
-    C4 & CPU NumPy learned object-centric evidence & strongly supported \\
-    C5 & real-robot validation & unsupported \\
-    C6 & broad benchmark superiority & unsupported \\
-    C7 & universal or 100\% repair & unsupported \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+  \includegraphics[width=0.90\linewidth]{figures/figure3_tail_diagnostics.png}
+  \caption{Tail diagnostics for the main selected-tail failure.}
+  \label{fig:tail-diagnostics}
+\end{figure}
 
-\section*{Reproducibility Statement}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure12_negative_control.png}
+  \caption{Good-scene negative control. High-budget selection does not collapse when binding pressure is low.}
+  \label{fig:negative-control}
+\end{figure}
 
-The repository contains CPU-first scripts for smoke, full, and claim-audit runs. The full run writes result tables, figures, claim-status files, and deterministic artifact hashes. The current audited run passes the claim audit with C3 marked partial and all unsupported boundary claims left unsupported.
+\section{Repair Selectors}
+\label{app:repairs}
 
-\section*{References}
+The raw selector uses model score only. Identity repair adds temporal consistency and predicted-target agreement. Property calibration penalizes high-entropy or surprising hidden-property estimates. Targeted probing adds a support-covered diagnostic for hidden-property scenes. Observable repair uses generated observable features and uncertainty proxies. Combined repair aggregates these object diagnostics. Pilot-calibrated lower-confidence selection fits a utility predictor on pilot-labeled candidates and subtracts a conformal residual.
+
+The repair stack is intentionally evaluated twice: once as controlled mechanism evidence, and once under the stricter no-leak final-test split. This is why the paper can report strong support-covered gains and still downgrade the budget-32 no-leak claim. The downgrade is a feature, not a weakness of the audit.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure2_repair_comparison.png}
+  \caption{Controlled repair comparison over raw, identity, property, probe, observable, combined, random, and oracle selectors.}
+  \label{fig:repair-comparison}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure8_repair_ablation.png}
+  \caption{Repair ablation. Combined repair improves over the best single repair in the raw corrupted panel.}
+  \label{fig:repair-ablation}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure10_repair_robustness.png}
+  \caption{Nested final-test repair robustness across split seeds.}
+  \label{fig:repair-robustness}
+\end{figure}
+
+\section{Stress Panel Gallery}
+\label{app:stress}
+
+This appendix collects the stress figures that support the scope statement in the main text. The point of the gallery is not to overwhelm the reader with variations. It is to make clear that the failure mode is tied to object binding under selection pressure rather than to a single named scene.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure6_stress_robustness.png}
+  \caption{High-budget stress robustness.}
+  \label{fig:stress}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure14_ood_object_count_stress.png}
+  \caption{Dense 6/8-object OOD stress.}
+  \label{fig:ood}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure24_extreme_object_count.png}
+  \caption{Extreme 10/12-object stress.}
+  \label{fig:extreme}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure18_domain_randomization.png}
+  \caption{Held-out domain-randomized synthetic stress.}
+  \label{fig:domain-randomization}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure19_counterfactual_target.png}
+  \caption{Counterfactual target identity stress.}
+  \label{fig:counterfactual}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure29_synthetic_benchmark_suite.png}
+  \caption{Benchmark-style synthetic task suite. This is a controlled synthetic suite, not an external benchmark claim.}
+  \label{fig:synthetic-suite}
+\end{figure}
+
+\section{Pilot Labels, Probes, Costs, and Gates}
+\label{app:deployment}
+
+The deployment-friction panels are included because a high repair score without costs or calibration would be too easy to attack. Pilot calibration tests whether a small labeled set of object candidates can train a held-out selector. Pilot-budget sensitivity tests the effect of label count. Leave-one-failure-out calibration tests whether a calibrator trained without one failure family can transfer to that held-out family. Noisy-probe reliability tests imperfect diagnostic observations. Probe-cost sensitivity subtracts utility for probe actions. The deployment gate converts risk diagnostics into actions.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure20_pilot_calibration.png}
+  \caption{Held-out pilot-label calibration.}
+  \label{fig:pilot-calibration}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure26_pilot_label_budget.png}
+  \caption{Pilot-label budget sensitivity.}
+  \label{fig:pilot-budget}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure21_leave_one_failure_out.png}
+  \caption{Leave-one-failure-out calibration.}
+  \label{fig:leave-one}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure22_noisy_probe_reliability.png}
+  \caption{Noisy diagnostic-probe reliability.}
+  \label{fig:noisy-probe}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure25_probe_cost_sensitivity.png}
+  \caption{Probe-cost sensitivity.}
+  \label{fig:probe-cost}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure30_deployment_gate_policy.png}
+  \caption{Deployment-gate policy simulation.}
+  \label{fig:gate-policy}
+\end{figure}
+
+\section{Learned Object-Centric Artifact}
+\label{app:learned}
+
+The learned artifact is deliberately small so that it can be audited on CPU. The model uses slot and slot-pair features to fit transition, hidden-property, identity-alignment, and reward heads. The key questions are whether object information is learnable, whether ablations hurt, whether held-out variants retain margins, and whether learned heads help selected-tail scoring.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure7_learned_object_model.png}
+  \caption{CPU NumPy learned object-slot artifact.}
+  \label{fig:learned-object}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure13_learned_ablation.png}
+  \caption{Learned feature ablations. Removing object-relevant features degrades property or identity evidence.}
+  \label{fig:learned-ablation}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure23_learned_domain_shift.png}
+  \caption{Learned domain-shift checks on dense, occluded, crossing, and mixed object-count variants.}
+  \label{fig:learned-shift}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure28_learned_selection_transfer.png}
+  \caption{Learned selection transfer. Identity+reward scoring improves over reward-only scoring under selected-tail evaluation.}
+  \label{fig:learned-selection}
+\end{figure}
+
+\section{Statistical and Proxy Diagnostics}
+\label{app:stats}
+
+The statistical audit reports bootstrap lower-bound checks for the main failure, repair, OOD, extreme object-count, synthetic-suite, deployment-gate, counterfactual, target-sweep, learned selection, learned repair-policy, pilot calibration, leave-one-failure, noisy-probe, probe-cost, and toy-proxy effects. The minimum repair bootstrap margin is \VThreeBootstrapRepairMargin{}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure16_statistical_audit.png}
+  \caption{Bootstrap statistical audit.}
+  \label{fig:statistical-audit}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/figure15_model_family_proxies.png}
+  \caption{Toy model-family proxy diagnostics. These are controlled proxy selectors, not broad external benchmark comparisons.}
+  \label{fig:proxy}
+\end{figure}
+
+\section{Fifty-Round Self-Attack Ledger}
+\label{app:attack}
+
+\input{paper/v3_attack_ledger_table.tex}
+
+\section{Artifact Inventory}
+\label{app:artifacts}
+
+The v3 paper uses the following generated artifacts:
+\begin{itemize}
+  \item \texttt{results/tables/v3\_object\_centric\_scorecard.csv}
+  \item \texttt{results/tables/v3\_object\_centric\_attack\_ledger.csv}
+  \item \texttt{results/v3\_object\_centric\_evidence\_summary.json}
+  \item \texttt{results/v3\_object\_centric\_evidence\_summary.md}
+  \item \texttt{paper/v3\_object\_results\_macros.tex}
+  \item \texttt{paper/v3\_scorecard\_table.tex}
+  \item \texttt{paper/v3\_attack\_ledger\_table.tex}
+  \item \texttt{figures/figure32\_v3\_evidence\_scorecard.png}
+  \item \texttt{figures/figure33\_v3\_repair\_tiers.png}
+  \item \texttt{figures/figure34\_v3\_stress\_scope.png}
+  \item \texttt{figures/figure35\_v3\_learned\_transfer.png}
+  \item \texttt{figures/figure36\_v3\_deployment\_friction.png}
+  \item \texttt{figures/figure37\_v3\_attack\_coverage.png}
+\end{itemize}
+
+The final build script requires the repo PDF and Desktop PDF to match by SHA-256, checks the minimum page count, and verifies that the Desktop source map names the repo folder and GitHub repository.
+
+\section{Submission Checklist}
+\label{app:checklist}
+
+\begin{itemize}
+  \item \textbf{Claim support}: C1, C2, and C4 are strongly supported; C3 is partial in the no-leak budget-32 row and stronger only in support-covered or larger-budget rows.
+  \item \textbf{Duplication risk}: the paper is framed around object slots, target identity, occlusion, hidden properties, merge/split binding, and object probes, not around generic candidate-budget scaling.
+  \item \textbf{Leakage}: deployable no-leak rows exclude evaluation utility and hidden truth features; support-covered and oracle rows are labeled.
+  \item \textbf{Scope}: synthetic and controlled; no real-robot, broad external-benchmark, or universal-repair claims.
+  \item \textbf{Rigor}: exact law, Monte Carlo validation, negative controls, stress variants, paired effects, bootstrap audit, ablations, learned transfer, pilot budgets, noisy probes, probe costs, and self-attack ledger.
+  \item \textbf{Reproducibility}: CPU-first cached v3 build, standard claim audit, pytest, deterministic final PDF hash, and Desktop source map.
+\end{itemize}
 
 \begin{thebibliography}{9}
 

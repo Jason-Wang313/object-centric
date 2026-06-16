@@ -1,0 +1,13 @@
+gate,status,evidence
+Code freeze,PASS,"v4 build script regenerates cached evidence, compiles the PDF, copies Desktop/repo finals, and writes a manifest."
+Seeds and task families frozen,PASS,"Canonical tables cover main, dense, extreme, domain-randomized, counterfactual, target-sweep, synthetic-suite, pilot, probe, and learned variants."
+Metrics frozen,PASS,"100 artifact checks verify required tables, figures, summaries, and schemas."
+Baselines frozen,PASS,"Raw high-N, stop-early, random, reward-only, learned identity+reward, observable, combined, support-covered, and oracle rows remain separated."
+Stress conditions frozen,PASS,"Dense, extreme, occlusion, crossing, hidden-property, merge/split, target-retargeting, noisy-probe, and probe-cost stresses are generated artifacts."
+Leakage tiers frozen,PASS,"Deployable no-leak, support-covered, and oracle tiers are explicit; no-leak C3 stays partial at budget 32."
+Negative controls frozen,PASS,Good-scene controls avoid collapse; hidden-mode unidentifiable controls block high-N rather than claim universal recovery.
+Claim gates frozen,PASS,"C1/C2/C4 are strongly supported, C3 is bounded, and C5/C6/C7 remain unsupported nonclaims."
+Paper-claim coverage frozen,PASS,Positive paper claims map only to C1-C4; boundary nonclaims are verified at text locations.
+Citation and related-work pass,PASS,"v4 text adds in-text citations for object-centric learning, graph dynamics, planning/world models, calibration, conformal prediction, and benchmark context."
+Harsh-reviewer loop frozen,PASS,60 reviewer attack rows are generated from the frozen artifacts.
+Final reporting is measurement-only,PASS,v4 synthesis only reads CSV/JSON/PDF artifacts; no final protocol tuning occurs after report generation.

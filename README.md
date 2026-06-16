@@ -15,6 +15,16 @@ pytest
 
 The full run writes CSV tables under `results/tables/`, figures under `figures/`, and audit files under `results/` and `docs/`.
 
+The v4 submission build is the RAM-light finalization path:
+
+```bash
+python experiments/v4_cached_evidence.py
+python scripts/build_v4_paper.py
+python scripts/run_v4_claim_audit.py
+```
+
+It refreshes cached audited evidence, adds protocol-freeze/rubric/reviewer-attack artifacts, builds `paper/final/object centric-v4.pdf`, copies the same PDF to the Desktop, and verifies the hashes/source map.
+
 ## What This Is
 
 - A finite tie-aware score-tail law implementation for real and binary utility.
@@ -28,6 +38,7 @@ The full run writes CSV tables under `results/tables/`, figures under `figures/`
 - Paired per-seed repair statistics, a high-N stress panel, and threshold-based claim auditing.
 - Repair ablations, seed-block robustness checks, paper-text overclaim scanning, and artifact verification.
 - Paper-claim coverage audit separating strongly supported positive claims from unsupported boundary nonclaims, with cited claim locations verified.
+- V4 protocol-freeze, ICLR-style rubric, visible citation-surface, and 60-round reviewer-attack finalization artifacts for the submission PDF.
 - Raw-score calibration, score-noise sensitivity analysis, and deterministic artifact hashes.
 - Negative controls for the non-corrupted setting and learned feature ablations.
 - Dense-object OOD synthetic stress for 6- and 8-object scenes.
@@ -62,6 +73,10 @@ The project borrows only the abstract finite score-tail law pattern and audit di
 - `results/tables/learned_repair_policy_seed_metrics.csv`
 - `results/tables/learned_repair_policy_metrics.csv`
 - `results/tables/paper_claim_coverage.csv`
+- `results/tables/v4_object_centric_submission_scorecard.csv`
+- `results/tables/v4_protocol_freeze_gates.csv`
+- `results/tables/v4_iclr_style_rubric_map.csv`
+- `results/tables/v4_reviewer_attack_ledger.csv`
 - `results/tables/synthetic_benchmark_seed_metrics.csv`
 - `results/tables/synthetic_benchmark_metrics.csv`
 - `results/tables/deployment_policy_seed_metrics.csv`
@@ -155,6 +170,11 @@ The project borrows only the abstract finite score-tail law pattern and audit di
 - `figures/figure29_synthetic_benchmark_suite.png`
 - `figures/figure30_deployment_gate_policy.png`
 - `figures/figure31_learned_repair_policy_transfer.png`
+- `figures/figure38_v4_object_evidence_matrix.png`
+- `figures/figure39_v4_protocol_freeze.png`
+- `figures/figure40_v4_iclr_rubric.png`
+- `figures/figure41_v4_attack_coverage.png`
+- `figures/figure42_v4_source_firewall.png`
 
 ## Claim Boundaries
 

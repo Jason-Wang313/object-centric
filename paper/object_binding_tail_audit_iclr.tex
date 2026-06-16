@@ -25,10 +25,11 @@
 \sloppy
 
 \input{paper/v3_object_results_macros.tex}
+\input{paper/v4_object_results_macros.tex}
 
 \title{\vspace{-1.0em}Object Slots Under Selection Pressure: A Tail Audit for Binding Failures in Object-Centric World Models}
 \author{Anonymous Authors}
-\date{Submission-ready v3 draft}
+\date{Submission-ready v4 draft}
 
 \begin{document}
 \maketitle
@@ -36,12 +37,12 @@
 \begin{abstract}
 Object-centric world models are attractive for planning because their predictions are organized around persistent entities. The same structure creates a sharp failure mode when a controller samples many object-level futures and executes the candidate with the highest internal score. The selected future can be dynamically smooth, visually plausible, and slot-consistent while being bound to the wrong target object. This paper audits that selected tail in controlled 2D manipulation scenes with explicit slots, identities, occlusions, hidden properties, target/distractor ambiguity, trajectories, and object-level diagnostics.
 
-The contribution is not another generic candidate-budget story. The contribution is an object-binding audit. First, we use an exact finite, tie-aware selected-utility law to make the tail operator measurable on any finite scored candidate population. Second, we instantiate the population with object-centric futures that contain target swaps, merge/split errors, occlusion identity drift, and hidden-property mistakes. In the audited corrupted scenes, raw high-budget selection raises object score by \VThreeRawScoreGain{} while selected real utility drops by \VThreeRawUtilityDrop{} and the selected-tail identity error reaches \VThreeRawIdentityError{}. Third, we evaluate object-specific repairs under leakage tiers. Deployable no-leak pilot-label lower-confidence selection closes \VThreeNoLeakClosure{} of the raw-to-oracle gap at budget 32, which is useful but intentionally marked partial because it misses the predeclared 70\% strong threshold. Support-covered repair closes \VThreeSupportClosure{}, oracle rows close \VThreeOracleClosure{}, and hidden-mode negative controls force the gate to block high-budget selection when observables are insufficient. Fourth, a CPU NumPy semi-learned object-slot artifact verifies that property, identity-alignment, reward, learned selection, and learned repair-policy transfer are measurable inside the same controlled setting. The paper makes no real-robot, broad external-benchmark, or universal-repair claim.
+The contribution is not another generic candidate-budget story. The contribution is an object-binding audit. First, we use an exact finite, tie-aware selected-utility law to make the tail operator measurable on any finite scored candidate population. Second, we instantiate the population with object-centric futures that contain target swaps, merge/split errors, occlusion identity drift, and hidden-property mistakes. In the audited corrupted scenes, raw high-budget selection raises object score by \VThreeRawScoreGain{} while selected real utility drops by \VThreeRawUtilityDrop{} and the selected-tail identity error reaches \VThreeRawIdentityError{}. Third, we evaluate object-specific repairs under leakage tiers. Deployable no-leak pilot-label lower-confidence selection closes \VFourNoLeakClosure{} of the raw-to-oracle gap at budget 32, which is useful but intentionally marked partial because it misses the predeclared 70\% strong threshold. Support-covered repair closes \VFourSupportClosure{}, oracle rows close \VThreeOracleClosure{}, and hidden-mode negative controls force the gate to block high-budget selection when observables are insufficient. Fourth, a CPU NumPy semi-learned object-slot artifact verifies that property, identity-alignment, reward, learned selection, and learned repair-policy transfer are measurable inside the same controlled setting. The v4 submission layer adds \VFourSubmissionRows{} scorecard rows, \VFourProtocolGatesPassed{}/\VFourProtocolGates{} protocol-freeze gates, \VFourRubricAxesPassed{}/\VFourRubricAxes{} ICLR-style rubric axes, \VFourArtifactChecks{} artifact checks, \VFourCitationMarkers{} visible in-text citation markers, and \VFourAttackRounds{} harsh-reviewer attacks. The paper makes no real-robot, broad external-benchmark, or universal-repair claim.
 \end{abstract}
 
 \section{Introduction}
 
-Object-centric prediction changes what a planning error looks like. In a pixel or global-latent model, a bad future may be blurry, inconsistent, or globally implausible. In an object-centric model, a bad future can look coherent because each slot follows an apparently reasonable path. The problem is that coherence is indexed by a slot assignment. If the target identity is wrong, a plausible object future can be the wrong future for control.
+Object-centric prediction changes what a planning error looks like. Methods such as MONet, iterative object-centric inference, Slot Attention, and video slot models organize scenes around entities rather than a single global state \cite{burgess2019monet,greff2019multi,locatello2020slot,kipf2021conditional}. In a pixel or global-latent model, a bad future may be blurry, inconsistent, or globally implausible. In an object-centric model, a bad future can look coherent because each slot follows an apparently reasonable path. The problem is that coherence is indexed by a slot assignment. If the target identity is wrong, a plausible object future can be the wrong future for control.
 
 This paper studies the case where the controller samples a finite candidate set of imagined futures and selects the top-scored candidate. We call this operation a selected-tail operator because it concentrates the decision on whatever the scoring function makes extreme. When the score rewards object-level plausibility, temporal smoothness, or predicted property confidence, the upper tail can contain futures that look good for the wrong object. The selected candidate may track a distractor, preserve a swapped identity through occlusion, merge two nearby objects, or assume the wrong hidden mass. Real utility is then evaluated on the true target object and can fall even while the object score rises.
 
@@ -53,12 +54,12 @@ When an object-centric world model ranks many candidate futures, does the select
 
 This framing matters because it separates our paper from architecture-agnostic candidate-budget analyses. The mathematical law used here is generic by design; it is a measuring device. The empirical object of study is not the law itself but the slot-level population on which the law acts: target identity, distractor similarity, occlusion, merge/split structure, hidden properties, and object repair signals.
 
-The repository implements a CPU-first controlled testbed. Candidate futures are generated for small 2D manipulation scenes with multiple objects. Each candidate has a model score, a real utility against the true target, predicted slot identities, trajectories, hidden-property estimates, uncertainty diagnostics, and flags describing failure families. The study includes raw selection, identity-consistency repair, hidden-property calibration, targeted probes, observable-only repair, combined repair, pilot-label lower-confidence selection, conservative deployment gates, toy proxy selectors, and a small learned object-slot model.
+The repository implements a CPU-first controlled testbed. Candidate futures are generated for small 2D manipulation scenes with multiple objects, in the spirit of using controlled environments to isolate planning mechanisms before wider deployment claims \cite{todorov2012mujoco,brockman2016openai}. Each candidate has a model score, a real utility against the true target, predicted slot identities, trajectories, hidden-property estimates, uncertainty diagnostics, and flags describing failure families. The study includes raw selection, identity-consistency repair, hidden-property calibration, targeted probes, observable-only repair, combined repair, pilot-label lower-confidence selection, conservative deployment gates, toy proxy selectors, and a small learned object-slot model.
 
 Our claims are intentionally tiered. Controlled support-covered diagnostics can be useful for understanding failure mechanisms, but they are not deployment proof. Oracle rows are upper bounds for interpreting regret. Deployable no-leak rows may use generated futures, model scores, generated uncertainty, and pilot labels from held-out calibration conditions; they cannot use evaluation real utility, all-candidate labels, or hidden truth features. This discipline is not cosmetic. It changes the strength of the repair claim: a legacy combined-repair panel is very strong, but the strict no-leak nested final-test row at budget 32 closes \VThreeNoLeakClosure{} of the gap and is therefore reported as partial.
 
 \paragraph{Contributions.}
-The v3 manuscript makes five contributions:
+The v4 manuscript makes five contributions:
 \begin{itemize}
   \item a finite, tie-aware law for expected selected utility under top-score selection, used as an audit equation rather than as an architecture claim;
   \item a controlled object-centric candidate generator that exposes target swaps, occlusion drift, merge/split binding errors, and hidden-property mistakes;
@@ -151,12 +152,21 @@ The lower-confidence selector is deliberately conservative. It estimates candida
 
 \subsection{Evidence Map}
 
-The repository contains the raw tables, generated figures, claim-status files, and deterministic artifact hashes. Figure~\ref{fig:v3-scorecard} summarizes the main audit values. Table~\ref{tab:v3-scorecard} gives the claim-to-artifact scorecard that the v3 paper uses as a guardrail.
+The repository contains the raw tables, generated figures, claim-status files, and deterministic artifact hashes. Version 4 adds a submission-facing evidence layer on top of those artifacts: Table~\ref{tab:v4-scorecard} records the object-centric scorecard used for final reporting, and Figure~\ref{fig:v4-object-matrix} compresses the central failure, stress, repair, and learned-transfer values. The older v3 scorecard remains in Table~\ref{tab:v3-scorecard} as the claim-to-artifact guardrail that the v4 layer extends.
+
+\input{paper/v4_object_scorecard_table.tex}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/figure38_v4_object_evidence_matrix.png}
+  \caption{V4 object-binding evidence matrix. The raw tail raises object score and identity error, while benchmark-style synthetic repair, deployment gating, noisy-probe repair, and learned repair recover utility inside their stated information tiers.}
+  \label{fig:v4-object-matrix}
+\end{figure}
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.92\linewidth]{figures/figure32_v3_evidence_scorecard.png}
-  \caption{V3 evidence scorecard. The exact-law error is small; the dominant empirical signal is that raw high-budget selection increases score while producing severe identity error and lower real utility in corrupted object-centric scenes.}
+  \caption{Cached evidence scorecard. The exact-law error is small; the dominant empirical signal is that raw high-budget selection increases score while producing severe identity error and lower real utility in corrupted object-centric scenes.}
   \label{fig:v3-scorecard}
 \end{figure}
 
@@ -266,28 +276,60 @@ The paper includes several frictions that reviewers often ask about. A conservat
 
 \section{Self-Attack Summary}
 
-Before finalizing v3, the paper is attacked along 50 reviewer angles. The attacks are machine-readable in \texttt{results/tables/v3\_object\_centric\_attack\_ledger.csv} and rendered in Appendix~\ref{app:attack}. Four rows are bounded limitations rather than pass/fail evidence: the law is generic, the experiments are synthetic, the learned model is intentionally simple, and toy proxies are diagnostic rather than external benchmarks. Those limitations are not hidden; they define the allowed scope of the claims.
+Before finalizing v4, the paper is attacked along \VFourAttackRounds{} reviewer angles. The first 50 attacks come from the object-centric v3 ledger; the final ten target v4-specific risks: missing in-text citations, benchmark-style stress overreach, generic-theorem duplication, stop-early baselines, learned reward-only baselines, protocol tuning after failure discovery, ICLR-style rubric gaps, and Desktop/source-map reproducibility. The attacks are machine-readable in \texttt{results/tables/v4\_reviewer\_attack\_ledger.csv} and rendered in Appendix~\ref{app:attack}. Bounded rows are not hidden failures; they are explicit scope restrictions that the manuscript must not inflate.
 
-Figure~\ref{fig:v3-attack} summarizes the attack coverage. The important change from the short draft is that the paper no longer waits until the limitations section to admit boundary conditions. The abstract, method, experiments, repair tables, and appendix all separate controlled support from unsupported claims.
+Figure~\ref{fig:v4-attack} summarizes the v4 attack coverage. The important change from the short draft is that the paper no longer waits until the limitations section to admit boundary conditions. The abstract, method, experiments, repair tables, protocol-freeze gates, and appendix all separate controlled support from unsupported claims.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.92\linewidth]{figures/figure37_v3_attack_coverage.png}
-  \caption{Self-attack coverage by reviewer angle. The ledger forces the manuscript to answer novelty, leakage, overclaim, stress, learned-evidence, and reproducibility attacks explicitly.}
-  \label{fig:v3-attack}
+  \includegraphics[width=0.92\linewidth]{figures/figure41_v4_attack_coverage.png}
+  \caption{V4 reviewer attack coverage by angle. The ledger forces the manuscript to answer novelty, leakage, overclaim, stress, benchmark-boundary, citation, learned-evidence, protocol, and reproducibility attacks explicitly.}
+  \label{fig:v4-attack}
+\end{figure}
+
+\section{Protocol Freeze and ICLR-Style Rubric Gates}
+
+During development, baselines and stress tests are used as adversarial teachers. Raw high-budget selection, raw stop-early fallback, random selection, reward-only learned scoring, learned identity+reward scoring, observable repair, combined repair, support-covered diagnostics, oracle rows, dense and extreme object counts, retargeted identities, noisy probes, probe costs, hidden-mode negative controls, and benchmark-style synthetic variants all expose different ways the mechanism can fail. The final v4 evidence is then frozen: code, seeds, task families, metrics, baselines, stress conditions, thresholds, and claim gates are measured rather than tuned.
+
+This distinction matters for review. A strong paper should read as a mechanism diagnosis: existing high-score object selection fails for a specific binding reason; object identity, hidden-property, and probe diagnostics address that reason; and the repair survives fair baselines, ablations, stress tests, negative controls, and scoped claims. Table~\ref{tab:v4-protocol} records the \VFourProtocolGatesPassed{}/\VFourProtocolGates{} protocol gates. Table~\ref{tab:v4-rubric} records the \VFourRubricAxesPassed{}/\VFourRubricAxes{} ICLR-style rubric axes.
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/figure39_v4_protocol_freeze.png}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/figure40_v4_iclr_rubric.png}
+  \end{minipage}
+  \caption{Protocol-freeze and ICLR-style rubric gates. The v4 layer explicitly checks final-reporting protocol, empirical rigor, baselines, statistics, reproducibility, and scope control.}
+  \label{fig:v4-protocol-rubric}
+\end{figure}
+
+\input{paper/v4_protocol_gate_table.tex}
+
+\input{paper/v4_rubric_table.tex}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.82\linewidth]{figures/figure42_v4_source_firewall.png}
+  \caption{V4 source firewall. The final manuscript keeps object identity, leakage tiers, boundary nonclaims, citation surface, and artifact checks visible so the paper cannot collapse into a generic selected-tail wrapper.}
+  \label{fig:v4-source-firewall}
 \end{figure}
 
 \section{Related Work}
 
-Object-centric representation learning studies how scenes can be decomposed into entities or slots, with examples including MONet and iterative object-centric inference. Graph networks and relational inductive biases motivate entity-level dynamics and relational reasoning. World-model planning methods such as latent dynamics, model-based reinforcement learning, and planning with learned models show why imagined futures are useful for control. Diffusion and other generative world models further motivate sampling many candidates from a learned predictive model.
+Object-centric representation learning studies how scenes can be decomposed into entities or slots. MONet, iterative object-centric inference, Slot Attention, and conditional object-centric video models are representative examples of the broader entity-factorization agenda \cite{burgess2019monet,greff2019multi,locatello2020slot,kipf2021conditional}. Graph networks and relational inductive biases motivate entity-level dynamics, relational reasoning, and object-object interaction modeling \cite{battaglia2018relational,sanchez2018graph}. Our paper is adjacent to those methods, but the measured object is different: not whether a representation decomposes a scene, but whether top-score selection binds the selected future to the correct target object.
 
-This paper uses that context but asks a different question. It does not compare against external graph, latent, diffusion, or robot benchmarks. It audits a selection failure that appears when object-centric candidate futures are ranked by a score that can prefer plausible but wrong bindings. The toy proxy panel is therefore included only to make the diagnostic comparison less insular. It is not a broad benchmark result.
+World-model planning methods such as latent dynamics, Dreamer-style agents, PETS-style model predictive control, MuZero-style planning, and generative trajectory models show why imagined futures and candidate selection are attractive for control \cite{hafner2019dream,hafner2020dreamer,chua2018deep,schrittwieser2020mastering,janner2022planning}. Diffusion models further motivate sampling many plausible futures from a learned generative model \cite{ho2020denoising}. This paper uses that context but asks a narrower question. It does not compare against external graph, latent, diffusion, or robot benchmarks. It audits a selection failure that appears when object-centric candidate futures are ranked by a score that can prefer plausible but wrong bindings. The toy proxy panel is therefore included only to make the diagnostic comparison less insular. It is not a broad benchmark result.
 
-The repair-tier discipline is related to concerns about evaluation leakage, calibration, and selective prediction. In this paper those concerns are operationalized by table columns and claim-audit code. Rows that use hidden truth or evaluation utility are labeled oracle upper bounds. Rows that use controlled probes are support-covered. Only no-leak rows with pilot labels and generated observable features are allowed to support deployment-style language.
+The repair-tier discipline is related to concerns about evaluation leakage, calibration, conformal prediction, and selective prediction \cite{guo2017calibration,vovk2005algorithmic,angelopoulos2021gentle}. In this paper those concerns are operationalized by table columns and claim-audit code. Rows that use hidden truth or evaluation utility are labeled oracle upper bounds. Rows that use controlled probes are support-covered. Only no-leak rows with pilot labels and generated observable features are allowed to support deployment-style language. Standard environments such as MuJoCo and OpenAI Gym are useful context for benchmark discipline \cite{todorov2012mujoco,brockman2016openai}, but this v4 paper names its benchmark-style task suite as controlled synthetic stress rather than as external validation.
 
 \section{Limitations}
 
-The evidence is controlled and synthetic. The scenes include dense clutter, extreme object counts, domain randomization, target retargeting, occlusion, crossing, hidden properties, merge/split failures, pilot labels, noisy probes, and probe costs, but they remain generated scenes. The paper has no real-robot experiments and no external manipulation benchmark.
+The evidence is controlled and synthetic. The scenes include dense clutter, extreme object counts, domain randomization, target retargeting, occlusion, crossing, hidden properties, merge/split failures, pilot labels, noisy probes, and probe costs, but they remain generated scenes. The benchmark-style synthetic task suite is a stronger stress surface than a single toy scene, but it is still not an external manipulation benchmark. The paper has no real-robot experiments and no external manipulation benchmark.
 
 The CPU NumPy learned model is a semi-learned audit artifact, not a claim about state-of-the-art object-centric modeling. Its value is that object information can be learned and then used in selected-tail scoring inside the controlled setting. It does not establish performance for modern large-scale architectures.
 
@@ -295,22 +337,24 @@ The repair story is bounded. Support-covered repair is strong in controlled sett
 
 \section{Reproducibility}
 
-The repository is CPU-first. The full experiment suite is available, but v3 paper generation uses cached audited artifacts to avoid unnecessary CPU and RAM load. The key commands are:
+The repository is CPU-first. The full experiment suite is available, but v4 paper generation uses cached audited artifacts to avoid unnecessary CPU and RAM load. The key commands are:
 \begin{verbatim}
-python scripts/prepare_v3_evidence.py
+python experiments/v4_cached_evidence.py
 bash scripts/build_iclr_paper.sh
-python scripts/run_v3_claim_audit.py
+python scripts/build_v4_paper.py
+python scripts/run_v4_claim_audit.py
 \end{verbatim}
 The standard claim audit remains:
 \begin{verbatim}
 bash scripts/run_claim_audit.sh
-pytest
+python -m pytest -q
+python -m compileall src experiments scripts tests -q
 \end{verbatim}
-The full canonical experiment run is intentionally separate because it is much heavier. Cached v3 evidence is acceptable only because the claim audit verifies the tables, figures, JSON summaries, text boundaries, and artifact manifest.
+The full canonical experiment run is intentionally separate because it is much heavier. Cached v4 evidence is acceptable only because the claim audit verifies the tables, figures, JSON summaries, text boundaries, protocol-freeze gates, source-map row, final PDF hash, and artifact manifest.
 
 \section{Conclusion}
 
-Score-tail selection over object-centric world-model futures can select the most plausible wrong object. The selected-utility law gives a finite audit equation; the controlled object-centric generator exposes how target swaps, occlusion drift, hidden-property errors, and merge/split mistakes enter the high-score tail; the repair tiering prevents hidden or evaluation information from being sold as deployment evidence. The result is a narrow but submission-ready claim: object binding must be audited as a first-class selected-tail risk before large candidate budgets are treated as a generic planning improvement.
+Score-tail selection over object-centric world-model futures can select the most plausible wrong object. The selected-utility law gives a finite audit equation; the controlled object-centric generator exposes how target swaps, occlusion drift, hidden-property errors, and merge/split mistakes enter the high-score tail; the repair tiering prevents hidden or evaluation information from being sold as deployment evidence. The v4 protocol-freeze layer makes the final paper harder to attack: baselines and stress tests teach the method where it fails during development, but the final report is measurement over frozen artifacts. The result is a narrow but submission-ready claim: object binding must be audited as a first-class selected-tail risk before large candidate budgets are treated as a generic planning improvement.
 
 \clearpage
 \appendix
@@ -534,13 +578,32 @@ The statistical audit reports bootstrap lower-bound checks for the main failure,
 \section{Fifty-Round Self-Attack Ledger}
 \label{app:attack}
 
-\input{paper/v3_attack_ledger_table.tex}
+The v3 base ledger contained 50 attacks. The v4 reviewer attack ledger below keeps those attacks and adds ten final submission attacks for citation coverage, benchmark-style stress boundaries, protocol freeze, rubric fit, and Desktop/GitHub reproducibility.
+
+\input{paper/v4_attack_ledger_table.tex}
 
 \section{Artifact Inventory}
 \label{app:artifacts}
 
-The v3 paper uses the following generated artifacts:
+The v4 paper uses the following generated artifacts:
 \begin{itemize}
+  \item \texttt{results/tables/v4\_object\_centric\_submission\_scorecard.csv}
+  \item \texttt{results/tables/v4\_protocol\_freeze\_gates.csv}
+  \item \texttt{results/tables/v4\_iclr\_style\_rubric\_map.csv}
+  \item \texttt{results/tables/v4\_reviewer\_attack\_ledger.csv}
+  \item \texttt{results/v4\_cached\_evidence\_summary.json}
+  \item \texttt{results/v4\_cached\_evidence\_summary.md}
+  \item \texttt{results/v4\_reviewer\_attack\_ledger.md}
+  \item \texttt{paper/v4\_object\_results\_macros.tex}
+  \item \texttt{paper/v4\_object\_scorecard\_table.tex}
+  \item \texttt{paper/v4\_protocol\_gate\_table.tex}
+  \item \texttt{paper/v4\_rubric\_table.tex}
+  \item \texttt{paper/v4\_attack\_ledger\_table.tex}
+  \item \texttt{figures/figure38\_v4\_object\_evidence\_matrix.png}
+  \item \texttt{figures/figure39\_v4\_protocol\_freeze.png}
+  \item \texttt{figures/figure40\_v4\_iclr\_rubric.png}
+  \item \texttt{figures/figure41\_v4\_attack\_coverage.png}
+  \item \texttt{figures/figure42\_v4\_source\_firewall.png}
   \item \texttt{results/tables/v3\_object\_centric\_scorecard.csv}
   \item \texttt{results/tables/v3\_object\_centric\_attack\_ledger.csv}
   \item \texttt{results/v3\_object\_centric\_evidence\_summary.json}
@@ -556,7 +619,7 @@ The v3 paper uses the following generated artifacts:
   \item \texttt{figures/figure37\_v3\_attack\_coverage.png}
 \end{itemize}
 
-The final build script requires the repo PDF and Desktop PDF to match by SHA-256, checks the minimum page count, and verifies that the Desktop source map names the repo folder and GitHub repository.
+The final build script requires the repo PDF and Desktop PDF to match by SHA-256, checks the minimum page count, removes stale Desktop v2/v3 research PDFs, and verifies that the Desktop source map names the repo folder and GitHub repository.
 
 \section{Submission Checklist}
 \label{app:checklist}
@@ -566,11 +629,11 @@ The final build script requires the repo PDF and Desktop PDF to match by SHA-256
   \item \textbf{Duplication risk}: the paper is framed around object slots, target identity, occlusion, hidden properties, merge/split binding, and object probes, not around generic candidate-budget scaling.
   \item \textbf{Leakage}: deployable no-leak rows exclude evaluation utility and hidden truth features; support-covered and oracle rows are labeled.
   \item \textbf{Scope}: synthetic and controlled; no real-robot, broad external-benchmark, or universal-repair claims.
-  \item \textbf{Rigor}: exact law, Monte Carlo validation, negative controls, stress variants, paired effects, bootstrap audit, ablations, learned transfer, pilot budgets, noisy probes, probe costs, and self-attack ledger.
-  \item \textbf{Reproducibility}: CPU-first cached v3 build, standard claim audit, pytest, hash-verified repo/Desktop final PDFs, and Desktop source map.
+  \item \textbf{Rigor}: exact law, Monte Carlo validation, negative controls, stress variants, paired effects, bootstrap audit, ablations, learned transfer, pilot budgets, noisy probes, probe costs, protocol-freeze gates, ICLR-style rubric map, and v4 reviewer attack ledger.
+  \item \textbf{Reproducibility}: CPU-first cached v4 build, standard claim audit, pytest, compileall, hash-verified repo/Desktop final PDFs, and Desktop source map.
 \end{itemize}
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
 
 \bibitem{battaglia2018relational}
 Peter W. Battaglia, Jessica B. Hamrick, Victor Bapst, Alvaro Sanchez-Gonzalez, Vinicius Zambaldi, Mateusz Malinowski, Andrea Tacchetti, David Raposo, Adam Santoro, Ryan Faulkner, Caglar Gulcehre, Francis Song, Andrew Ballard, Justin Gilmer, George Dahl, Ashish Vaswani, Kelsey Allen, Charles Nash, Victoria Langston, Chris Dyer, Nicolas Heess, Daan Wierstra, Pushmeet Kohli, Matt Botvinick, Oriol Vinyals, Yujia Li, and Razvan Pascanu.
@@ -601,6 +664,61 @@ Jonathan Ho, Ajay Jain, and Pieter Abbeel.
 Julian Schrittwieser, Ioannis Antonoglou, Thomas Hubert, Karen Simonyan, Laurent Sifre, Simon Schmitt, Arthur Guez, Edward Lockhart, Demis Hassabis, Thore Graepel, Timothy Lillicrap, and David Silver.
 \newblock Mastering Atari, Go, chess and shogi by planning with a learned model.
 \newblock \emph{Nature}, 2020.
+
+\bibitem{locatello2020slot}
+Francesco Locatello, Dirk Weissenborn, Thomas Unterthiner, Aravindh Mahendran, Georg Heigold, Jakob Uszkoreit, Alexey Dosovitskiy, and Thomas Kipf.
+\newblock Object-centric learning with Slot Attention.
+\newblock \emph{NeurIPS}, 2020.
+
+\bibitem{kipf2021conditional}
+Thomas Kipf, Gamaleldin Elsayed, Aravindh Mahendran, Austin Stone, Sara Sabour, Klaus Greff, and S. M. Ali Eslami.
+\newblock Conditional object-centric learning from video.
+\newblock \emph{ICLR}, 2022.
+
+\bibitem{sanchez2018graph}
+Alvaro Sanchez-Gonzalez, Nicolas Heess, Jost Tobias Springenberg, Josh Merel, Martin Riedmiller, Raia Hadsell, and Peter Battaglia.
+\newblock Graph networks as learnable physics engines for inference and control.
+\newblock \emph{ICML}, 2018.
+
+\bibitem{hafner2020dreamer}
+Danijar Hafner, Timothy Lillicrap, Mohammad Norouzi, and Jimmy Ba.
+\newblock Mastering Atari with discrete world models.
+\newblock \emph{ICLR}, 2021.
+
+\bibitem{chua2018deep}
+Kurtland Chua, Roberto Calandra, Rowan McAllister, and Sergey Levine.
+\newblock Deep reinforcement learning in a handful of trials using probabilistic dynamics models.
+\newblock \emph{NeurIPS}, 2018.
+
+\bibitem{janner2022planning}
+Michael Janner, Yilun Du, Joshua Tenenbaum, and Sergey Levine.
+\newblock Planning with diffusion for flexible behavior synthesis.
+\newblock \emph{ICML}, 2022.
+
+\bibitem{guo2017calibration}
+Chuan Guo, Geoff Pleiss, Yu Sun, and Kilian Q. Weinberger.
+\newblock On calibration of modern neural networks.
+\newblock \emph{ICML}, 2017.
+
+\bibitem{vovk2005algorithmic}
+Vladimir Vovk, Alexander Gammerman, and Glenn Shafer.
+\newblock Algorithmic Learning in a Random World.
+\newblock Springer, 2005.
+
+\bibitem{angelopoulos2021gentle}
+Anastasios N. Angelopoulos and Stephen Bates.
+\newblock A gentle introduction to conformal prediction and distribution-free uncertainty quantification.
+\newblock \emph{arXiv:2107.07511}, 2021.
+
+\bibitem{todorov2012mujoco}
+Emanuel Todorov, Tom Erez, and Yuval Tassa.
+\newblock MuJoCo: A physics engine for model-based control.
+\newblock \emph{IROS}, 2012.
+
+\bibitem{brockman2016openai}
+Greg Brockman, Vicki Cheung, Ludwig Pettersson, Jonas Schneider, John Schulman, Jie Tang, and Wojciech Zaremba.
+\newblock OpenAI Gym.
+\newblock \emph{arXiv:1606.01540}, 2016.
 
 \end{thebibliography}
 

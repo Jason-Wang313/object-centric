@@ -1,0 +1,13 @@
+axis,gate,observed,artifact,paper_use
+Exact finite audit law,PASS,mean MAE 4.629e-04; max 0.0061,results/tables/exact_law_validation.csv,audit equation only; not the main novelty
+Raw object-tail collapse,PASS,score gain 0.576; utility drop 0.364; identity error 1.000,results/tables/main_metrics.csv,central object-slot binding failure
+Good-scene negative control,PASS,good utility 0.655; identity error 0.125,results/tables/negative_control.csv,shows high N is not intrinsically harmful
+Dense and extreme object counts,PASS,dense raw utility 0.036; extreme raw utility 0.026,results/tables/ood_metrics.csv; results/tables/extreme_object_count_metrics.csv,"stress scope, still synthetic"
+Target retargeting and six-way sweep,PASS,sweep raw utility 0.0001; identity error 1.000,results/tables/counterfactual_target_metrics.csv; results/tables/target_identity_sweep_metrics.csv,rules out fixed target-zero artifact
+Benchmark-style synthetic suite,PASS,raw utility 0.019; combined gain 0.816,results/tables/synthetic_benchmark_metrics.csv,"recognized as controlled synthetic stress, not external validation"
+Deployable no-leak repair,PARTIAL,budget-32 gap closure 68.4\%,results/tables/repair_final_test_metrics.csv,useful but below 70% strong threshold
+Support-covered and oracle tiers,PASS,support-covered 91.9\%; oracle 100.0\%,results/tables/repair_robustness_by_split.csv,"mechanism support and upper bound, not deployment proof"
+Deployment frictions,PASS,gate-vs-raw 0.788; noisy-probe gain 0.867; high-cost gain 0.567,results/tables/deployment_policy_metrics.csv; results/tables/noisy_probe_metrics.csv; results/tables/probe_cost_metrics.csv,"cost, probe, and fallback stress"
+Learned object-slot artifact,PASS,property margin 0.246; identity margin 0.488; reward corr 0.953,results/tables/learned_metrics.csv,CPU semi-learned controlled evidence
+Learned selection and repair transfer,PASS,selection gain 0.658; repair gain 0.823,results/tables/learned_selection_metrics.csv; results/tables/learned_repair_policy_metrics.csv,object information matters after learning
+Bootstrap and claim audit,PASS,raw min CI 0.033; repair min CI 0.104,results/tables/statistical_audit.csv; results/claims_status.json,statistical caution and overclaim guard

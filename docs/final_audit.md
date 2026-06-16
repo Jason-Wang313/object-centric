@@ -2,6 +2,12 @@
 
 Paper-readiness judgment: paper-worthy v1 for controlled synthetic evidence; needs benchmark validation for broader claims.
 
+## V4 Finalization Addendum
+- V4 keeps the paper scoped as a controlled object-slot binding audit, not a broad benchmark or real-robot claim.
+- Added cached v4 evidence synthesis, protocol-freeze gates, ICLR-style rubric map, source firewall, visible citation surface, and a 60-round reviewer attack ledger.
+- Final v4 build on 2026-06-16 produced a 35-page repo/Desktop PDF pair with SHA-256 `9069eb9c948ed1445af66661ee5ebd6d33b6517f4c754296ceac7e59b65264b3`.
+- `scripts/run_v4_claim_audit.py` passed 31/31 checks; `bash scripts/run_claim_audit.sh`, `python -m pytest -q`, and `python -m compileall src experiments scripts tests -q` also passed.
+
 ## Command Results
 - bash scripts/run_smoke.sh: pass (smoke experiment runtime 77.252s; strict claim audit passed; tightened bootstrap statistical audit passed with min CI margin 0.010058488216230566; conservative learned repair-policy mean utility 0.8489640266219249; learned repair-policy raw gain 0.7376876264430621; learned repair-policy over learned-identity gain 0.2118973030297409; learned repair-policy mean learned-identity win rate 0.5714285714285714; deployment-policy corrupted gain 0.7185166981979354; deployment-policy corrupted stop-early gain 0.7341964238363273; synthetic task-suite combined gain 0.7553141399022321; synthetic task-suite observable gain 0.7476931390088214; learned-selection identity gain 0.6509536400923468; target-sweep combined gain 0.7895870042905537)
 - bash scripts/run_all.sh: pass (full experiment runtime 813.495s; 16 main seeds, learned domain-shift panel with min property margin 0.125 and min identity margin 0.4458333333333333, learned-selection transfer with 32 eval seeds and 1344 rows, conservative learned repair-policy transfer with 32 eval seeds and 2016 rows, learned repair-policy mean utility 0.8457892245396742, learned repair-policy min variant utility 0.8194152353962161, learned repair-policy raw gain 0.8234771981724383, learned repair-policy over learned-identity gain 0.2252909624035247, learned repair-policy mean learned-identity win rate 0.6294642857142857, learned repair-policy min learned-identity win rate 0.375, benchmark-style synthetic task suite with 32 seeds and 1120 rows, deployment-policy panel with 384 rows, deployment-policy corrupted gain 0.7883015801574633, deployment-policy corrupted stop-early gain 0.5368058036226959, deployment-policy min corrupted utility 0.7880296839171549, deployment-policy min win rate 0.9375, synthetic task-suite combined gain 0.8161407808398964, synthetic task-suite observable gain 0.8160747948047943, learned-selection identity gain 0.6583388223801652, learned-selection identity-over-reward gain 0.3596642896057789, 48 domain-randomized seeds, 48 counterfactual target seeds, 48 target-identity sweep seeds over 6 target IDs, 1440 target-sweep rows, 48 pilot calibration eval seeds, 864 pilot calibration rows, 48 pilot-budget eval seeds, 5184 pilot-budget rows, 40 leave-one-failure eval seeds per held-out family, 1200 leave-one-failure rows, 48 noisy-probe reliability seeds, 1440 noisy-probe rows, 48 probe-cost seeds, 3360 probe-cost rows, 16 OOD dense-object seeds, 24 extreme object-count seeds, 16 model-family proxy seeds, 24 sensitivity seeds, 32 stress seeds, tightened bootstrap statistical audit passed with min CI margin 0.03294730684862576, target-sweep combined gain 0.8102272022985341, gate block_high_n)
@@ -110,6 +116,10 @@ The toy proxy panel is a controlled diagnostic comparison, not a graph-physics b
 - results\tables\unidentifiable_negative_control.csv
 - results\tables\v3_object_centric_attack_ledger.csv
 - results\tables\v3_object_centric_scorecard.csv
+- results\tables\v4_iclr_style_rubric_map.csv
+- results\tables\v4_object_centric_submission_scorecard.csv
+- results\tables\v4_protocol_freeze_gates.csv
+- results\tables\v4_reviewer_attack_ledger.csv
 ### figures
 - figures\figure10_repair_robustness.png
 - figures\figure10_score_calibration.png
@@ -142,7 +152,12 @@ The toy proxy panel is a controlled diagnostic comparison, not a graph-physics b
 - figures\figure35_v3_learned_transfer.png
 - figures\figure36_v3_deployment_friction.png
 - figures\figure37_v3_attack_coverage.png
+- figures\figure38_v4_object_evidence_matrix.png
+- figures\figure39_v4_protocol_freeze.png
 - figures\figure3_tail_diagnostics.png
+- figures\figure40_v4_iclr_rubric.png
+- figures\figure41_v4_attack_coverage.png
+- figures\figure42_v4_source_firewall.png
 - figures\figure4_targeted_probe_before_after.png
 - figures\figure5_exact_law_validation.png
 - figures\figure6_stress_robustness.png
@@ -159,6 +174,7 @@ The toy proxy panel is a controlled diagnostic comparison, not a graph-physics b
 - docs\reviewer_attacks.md
 - docs\theory.md
 - docs\v3_execution_plan.md
+- docs\v4_execution_plan.md
 ### paper
 - paper\abstract.md
 - paper\checklist.md

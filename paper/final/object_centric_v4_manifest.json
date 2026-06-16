@@ -1,0 +1,13 @@
+{
+  "desktop_pdf": "C:\\Users\\wangz\\OneDrive\\Desktop\\object centric-v4.pdf",
+  "generated_evidence": "results/v4_cached_evidence_summary.json",
+  "min_pages": 25,
+  "old_desktop_pdfs_removed": true,
+  "pages": 35,
+  "paper": "object centric",
+  "repo_final_pdf": "C:\\Users\\wangz\\object centric\\paper\\final\\object centric-v4.pdf",
+  "sha256": "9069eb9c948ed1445af66661ee5ebd6d33b6517f4c754296ceac7e59b65264b3",
+  "source_pdf": "C:\\Users\\wangz\\object centric\\paper\\object_binding_tail_audit_iclr.pdf",
+  "uses_cached_v4_evidence": true,
+  "version": "v4"
+}

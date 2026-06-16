@@ -1,0 +1,8 @@
+rubric_axis,status,evidence
+Novelty and paper identity,PASS,"Every section centers slots, binding, target identity, occlusion, hidden properties, and object-specific repair rather than a generic candidate-budget wrapper."
+Empirical rigor,PASS,"100 artifact checks plus stress, ablation, pilot, learned, and bootstrap tables."
+Baselines and ablations,PASS,"Raw, stop-early, random, reward-only, learned identity+reward, observable, combined, support-covered, and oracle comparisons are not collapsed."
+Stress and negative controls,PASS,"Good scenes, hidden-mode impossibility, dense/extreme counts, retargeting, synthetic suite, noisy probes, and probe costs attack the method directly."
+Statistical caution,PASS,"Bootstrap lower bounds, paired seed effects, seed blocks, and no-leak threshold downgrading prevent inflated claims."
+Reproducibility,PASS,"Protocol gates, build script, final manifest, source map, tests, and claim audits are explicit."
+Scope control,PASS,"Real-robot, broad benchmark, and universal-repair claims remain unsupported and absent from positive text."

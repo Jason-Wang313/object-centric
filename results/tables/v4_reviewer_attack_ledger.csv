@@ -1,0 +1,61 @@
+round,reviewer_angle,attack,response,status
+1,theory novelty,The finite law is generic.,Concede generic law; make object slots/identity the empirical contribution.,PASS
+2,novelty,Paper could look like a generic candidate-budget wrapper.,"Remove budget-maximization framing; center slots, binding, probes, hidden properties.",PASS
+3,external validity,All experiments are synthetic.,"Explicit boundary: controlled synthetic evidence, no robot claim.",PASS
+4,overclaim,No real robot validation.,Unsupported boundary claims remain explicit in claim audit.,PASS
+5,overclaim,Toy proxies are not broad benchmarks.,State proxy panel is diagnostic only.,PASS
+6,overclaim,Some hidden modes are impossible.,Negative control blocks high-N and forbids universal repair.,PASS
+7,mechanism,Raw score may just be badly calibrated.,"Report score bins, object-real gap, identity error, and failure families.",PASS
+8,scope,Failure may be one handcrafted case.,"Dense, extreme, retargeting, randomized, benchmark-style suites.",PASS
+9,scope,Target may be hard-coded as object zero.,Counterfactual target and six-target sweep.,PASS
+10,scale,Result may vanish with more distractors.,OOD dense and extreme object-count tables.,PASS
+11,mechanism,Swap-only failures are too narrow.,Merge/split family and synthetic suite variants.,PASS
+12,mechanism,Occlusion drift may be untested.,Occlusion corridors and domain-shift variants.,PASS
+13,mechanism,Hidden mass/property errors may be inaccessible.,Tiered repair and impossible hidden-mode negative control.,PASS
+14,negative control,High-N may always hurt.,Good-scene negative control retains utility and low identity error.,PASS
+15,theory validation,Monte Carlo validation could be loose.,Mean MAE 4.63e-4 and max error below threshold.,PASS
+16,theory detail,Tie handling may be underspecified.,Finite tie-aware derivation with score groups.,PASS
+17,leakage,Repairs may use evaluation utility.,Tier fields and claim audit forbid real-utility features.,PASS
+18,leakage,Deployable repair may use hidden truth.,No-leak rows must set hidden-feature use false.,PASS
+19,leakage,Oracle rows may be presented as deployable.,Oracle tier is separated in tables and prose.,PASS
+20,leakage,Hyperparameters may be tuned on test.,Condition-level pilot/dev/final splits and model-selection records.,PASS
+21,leakage,Candidate-level split may leak condition info.,Nested splits are whole-condition splits.,PASS
+22,claim strength,No-leak budget 32 misses 70%.,Main no-leak claim is marked partial at 68.4%.,PASS
+23,claim strength,Budget sensitivity may be hidden.,Budget 128 closes 80.2%; budget sweep reported.,PASS
+24,claim strength,Support-covered evidence may be over-sold.,Use controlled-support language only.,PASS
+25,probe realism,Diagnostic probes may be too clean.,Noisy-probe reliability stress.,PASS
+26,probe realism,Probes may be free.,Probe-cost sensitivity through high-cost setting.,PASS
+27,policy,Gate actions may not be evaluated.,Deployment-gate simulation vs raw and stop-early.,PASS
+28,baseline,A simple smaller-N fallback may solve it.,Gate beats stop-early by the audited margin.,PASS
+29,ablation,Combined repair may hide one dominant signal.,Repair ablation margin is reported.,PASS
+30,statistics,Seed fluke could drive results.,"Paired effects, seed blocks, bootstrap audit.",PASS
+31,statistics,Confidence intervals may cross zero.,Statistical audit reports positive min CI margins.,PASS
+32,calibration,LCB coverage may fail in selected tail.,Overall and selected-tail LCB coverage table.,PASS
+33,safety,The impossible-case gate may be cosmetic.,Unidentifiable negative control blocks all split seeds.,PASS
+34,learned evidence,NumPy model is too simple.,Framed as controlled semi-learned artifact only.,PASS
+35,learned evidence,Learned heads may not use object information.,No-mass and no-pair ablations lose accuracy.,PASS
+36,learned evidence,Learned model may not affect selection.,Identity+reward learned selector beats raw and reward-only.,PASS
+37,learned evidence,Learned repair policy may not transfer.,Policy beats raw and learned identity in mean utility.,PASS
+38,learned evidence,Policy could have bad tail losses.,Worst learned-identity seed loss is below threshold.,PASS
+39,learned evidence,Raw learned utility ordering could be weak.,"Generalization diagnostics include rank, calibration, repair closure.",PASS
+40,learned evidence,Learned model may overfit simple scenes.,Held-out learned domain-shift checks pass.,PASS
+41,comparison,Proxy baselines may be weak.,"Toy proxy is only a diagnostic, not SOTA comparison.",PASS
+42,audit,Manuscript may drift beyond artifacts.,"Claim audit scans README, docs, and paper text.",PASS
+43,reproducibility,Claim artifacts may be missing.,Artifact verifier and hashes are generated.,PASS
+44,reproducibility,Full run is too expensive for quick checks.,Cached v3 summaries plus smoke/claim audit; full run remains optional.,PASS
+45,reproducibility,PDF/artifacts may be nondeterministic.,v3 build/audit checks hashes and page count.,PASS
+46,workflow,Desktop PDF may be detached from repo.,Source map and Desktop PDF naming are audited.,PASS
+47,presentation,Too many figures may obscure the message.,v3 evidence figures summarize panels before appendix details.,PASS
+48,framing,Contribution could sound too broad.,Title/abstract emphasize object slots under selection pressure.,PASS
+49,framing,Limitations may be boilerplate.,"Limitations name synthetic scenes, toy proxies, support tiers, hidden modes.",PASS
+50,novelty,"Placed beside other papers, it may look identical.",Object-slot vocabulary and failure mechanisms dominate every section.,PASS
+51,citation,The draft has too few visible in-text citations.,"Add narrative citations in the object-centric, world-model, calibration, conformal, and benchmark-boundary paragraphs.",PASS
+52,benchmark,A reviewer may reject a paper that uses only a toy setup.,Expose the benchmark-style synthetic task suite as a frozen stress suite and keep real-robot or broad external benchmark claims unsupported.,PASS
+53,benchmark,The synthetic benchmark-style suite might be over-sold as external validation.,"Name the suite as controlled synthetic in text, figures, tables, and the claim audit.",PASS
+54,novelty,The selected-utility theorem can look like a reusable wrapper.,"Make the law an audit instrument and make object slots, binding, target identity, occlusion, merge/split, and hidden properties the scientific center.",PASS
+55,baselines,A simple stop-early selector could be enough.,Report the deployment gate against both raw high-N and raw stop-early fallback.,PASS
+56,baselines,The learned repair policy may just hide a learned reward-only baseline.,"Keep reward-only, learned identity+reward, observable repair, learned repair, and oracle rows separated.",PASS
+57,protocol,Failures might have been used to keep tuning the final protocol.,"Freeze code, seeds, tasks, metrics, baselines, stress conditions, thresholds, and claim gates before final reporting.",PASS
+58,protocol,Baselines and stress tests could be cherry-picked after the story was known.,Treat them as adversarial teachers during development and final evidence as measurement-only over frozen artifacts.,PASS
+59,rubric,The paper may meet internal checks but still miss ICLR review criteria.,"Generate a rubric map for novelty, empirical rigor, baselines, statistics, reproducibility, and scope control.",PASS
+60,reproducibility,A fresh agent might not know which Desktop PDF and source folder are final.,"Build an object centric-v4 Desktop PDF, matching repo final PDF, manifest, source-map row, and GitHub commit.",PASS

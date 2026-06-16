@@ -1,0 +1,10 @@
+{
+  "desktop_sha256": "9069eb9c948ed1445af66661ee5ebd6d33b6517f4c754296ceac7e59b65264b3",
+  "failed_checks": [],
+  "num_checks": 31,
+  "num_fail": 0,
+  "num_pass": 31,
+  "overall_status": "PASS",
+  "pages": 35,
+  "repo_sha256": "9069eb9c948ed1445af66661ee5ebd6d33b6517f4c754296ceac7e59b65264b3"
+}

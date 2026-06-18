@@ -7,6 +7,7 @@ import json
 import shutil
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 
@@ -24,11 +25,25 @@ OLD_DESKTOPS = [
 SOURCE_MAP = DESKTOP / "PAPER_SOURCE_MAP.md"
 MANIFEST = FINAL_DIR / "object_centric_v4_manifest.json"
 MIN_PAGES = 25
+GITHUB_REPOSITORY = "Jason-Wang313/object-centric"
 
 
 def run(command: list[str]) -> None:
     print("+", " ".join(command), flush=True)
     subprocess.run(command, cwd=ROOT, check=True)
+
+
+def git_output(args: list[str]) -> str:
+    proc = subprocess.run(
+        ["git", *args],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    return proc.stdout.strip()
 
 
 def sha256(path: Path) -> str:
@@ -143,10 +158,25 @@ def main() -> int:
         "version": "v4",
         "pages": pages,
         "min_pages": MIN_PAGES,
+        "source_folder": str(ROOT),
+        "github_repository": GITHUB_REPOSITORY,
+        "github_remote": git_output(["remote", "get-url", "origin"]),
+        "git_branch_at_build": git_output(["branch", "--show-current"]),
         "source_pdf": str(SOURCE_PDF),
         "repo_final_pdf": str(FINAL_PDF),
         "desktop_pdf": str(DESKTOP_PDF),
         "sha256": repo_sha,
+        "verified_on": date.today().isoformat(),
+        "verification_scope": [
+            "cached v4 evidence synthesis",
+            "LaTeX final PDF build",
+            "repo/Desktop PDF SHA-256 equality",
+            "minimum page-count gate",
+            "required v4 PDF text markers",
+            "forbidden overclaim scan",
+            "old visible Desktop versions removed",
+            "Desktop source-map lookup row updated",
+        ],
         "old_desktop_pdfs_removed": all(not item.exists() for item in OLD_DESKTOPS),
         "uses_cached_v4_evidence": True,
         "generated_evidence": "results/v4_cached_evidence_summary.json",

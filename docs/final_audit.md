@@ -1,12 +1,15 @@
 # Final Audit
 
-Paper-readiness judgment: paper-worthy v1 for controlled synthetic evidence; needs benchmark validation for broader claims.
+Paper-readiness judgment: submission-ready v4 controlled object-centric audit within its stated scope. The paper is not a broad external-benchmark or real-robot claim; it is a scoped, evidence-frozen study of object-slot selected-tail binding failures and object-level repair/gating under controlled synthetic stress.
 
 ## V4 Finalization Addendum
 - V4 keeps the paper scoped as a controlled object-slot binding audit, not a broad benchmark or real-robot claim.
 - Added cached v4 evidence synthesis, protocol-freeze gates, ICLR-style rubric map, source firewall, visible citation surface, and a 60-round reviewer attack ledger.
-- Final v4 build on 2026-06-16 produced a 35-page repo/Desktop PDF pair with SHA-256 `9069eb9c948ed1445af66661ee5ebd6d33b6517f4c754296ceac7e59b65264b3`.
-- `scripts/run_v4_claim_audit.py` passed 31/31 checks; `bash scripts/run_claim_audit.sh`, `python -m pytest -q`, and `python -m compileall src experiments scripts tests -q` also passed.
+- Repaired two visual QA issues before finalization: the v4 reviewer-attack coverage plot and the bootstrap statistical-audit plot now use horizontal label-safe layouts.
+- Final v4 build on 2026-06-19 produced a 35-page repo/Desktop PDF pair with SHA-256 `fb8b8805c4775d1a0478a4e42a5e5134055d247651afd2647f1356974ec1f8c3`.
+- `scripts/run_v4_claim_audit.py` passed 31/31 checks; `python -m pytest -q` passed 19/19 tests; `python -m compileall src experiments scripts tests -q` passed.
+- Strict LaTeX log scan found no undefined references/citations, rerun warnings, overfull boxes, longtable warnings, or fatal errors in `paper/build/object_binding_tail_audit_iclr.log`.
+- Poppler rendered all 35 final pages; visual QA spot-checked title/abstract, dense scorecards, main stress figures, reviewer coverage, statistical audit, attack ledger, artifact inventory, and references on pages 1, 5, 10, 16, 24, 30, 31, 32, 33, and 35.
 
 ## Command Results
 - bash scripts/run_smoke.sh: pass (smoke experiment runtime 77.252s; strict claim audit passed; tightened bootstrap statistical audit passed with min CI margin 0.010058488216230566; conservative learned repair-policy mean utility 0.8489640266219249; learned repair-policy raw gain 0.7376876264430621; learned repair-policy over learned-identity gain 0.2118973030297409; learned repair-policy mean learned-identity win rate 0.5714285714285714; deployment-policy corrupted gain 0.7185166981979354; deployment-policy corrupted stop-early gain 0.7341964238363273; synthetic task-suite combined gain 0.7553141399022321; synthetic task-suite observable gain 0.7476931390088214; learned-selection identity gain 0.6509536400923468; target-sweep combined gain 0.7895870042905537)

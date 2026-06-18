@@ -320,22 +320,25 @@ def figure16_statistical_audit(statistical: pd.DataFrame, out: Path) -> None:
     if statistical.empty:
         return
     df = statistical.copy()
-    x = range(df.shape[0])
-    yerr = [
+    y = range(df.shape[0])
+    xerr = [
         df["estimate"] - df["bootstrap_ci_low"],
         df["bootstrap_ci_high"] - df["estimate"],
     ]
     colors = ["#3c7c5a" if bool(passes) else "#b23b3b" for passes in df["passes"]]
-    fig, ax = plt.subplots(figsize=(9.2, 4.6))
-    ax.bar(x, df["estimate"], yerr=yerr, color=colors, capsize=4, alpha=0.90)
-    ax.scatter(x, df["threshold"], color="#222222", marker="_", s=180, label="audit threshold")
-    ax.set_xticks(list(x))
-    ax.set_xticklabels(df["effect_id"], rotation=30, ha="right")
-    ax.set_ylabel("effect estimate with bootstrap 95% CI")
+    fig, ax = plt.subplots(figsize=(9.2, max(6.0, 0.24 * df.shape[0])))
+    ax.barh(y, df["estimate"], xerr=xerr, color=colors, capsize=3, alpha=0.90)
+    ax.scatter(df["threshold"], list(y), color="#222222", marker="|", s=180, label="audit threshold")
+    ax.set_yticks(list(y))
+    ax.set_yticklabels(df["effect_id"], fontsize=7)
+    ax.set_xlabel("effect estimate with bootstrap 95% CI")
     ax.set_title("Statistical audit of key controlled effects")
-    ax.grid(axis="y", alpha=0.25)
+    ax.grid(axis="x", alpha=0.25)
     ax.legend(frameon=False, fontsize=8)
-    _save(fig, out / "figure16_statistical_audit.png")
+    fig.tight_layout(rect=(0.24, 0.02, 0.98, 0.96))
+    out.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out / "figure16_statistical_audit.png", dpi=180)
+    plt.close(fig)
 
 
 def figure17_observable_repair(observable: pd.DataFrame, out: Path) -> None:

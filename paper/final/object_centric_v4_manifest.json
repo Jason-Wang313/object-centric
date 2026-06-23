@@ -1,13 +1,31 @@
 {
   "desktop_pdf": "C:\\Users\\wangz\\OneDrive\\Desktop\\object centric-v4.pdf",
   "generated_evidence": "results/v4_cached_evidence_summary.json",
+  "git_branch_at_build": "iclr-paper-polish-object-centric",
+  "github_remote": "https://github.com/Jason-Wang313/object-centric.git",
+  "github_repository": "Jason-Wang313/object-centric",
   "min_pages": 25,
   "old_desktop_pdfs_removed": true,
   "pages": 35,
   "paper": "object centric",
   "repo_final_pdf": "C:\\Users\\wangz\\object centric\\paper\\final\\object centric-v4.pdf",
-  "sha256": "9069eb9c948ed1445af66661ee5ebd6d33b6517f4c754296ceac7e59b65264b3",
+  "sha256": "43913bab1c92ef563c660d52da460d65ced6044331c73d5d6fb2c4e0b79ae6d5",
+  "boxed_link_rebuild_from_frozen_artifacts": "passed",
+  "pdf_annotation_link_audit": "35 annotations: 23 green citation boxes, 12 red internal-reference boxes; all use 1pt visible borders",
+  "visual_qa": "selected high-risk pages 1, 2, 3, 5, 7, 8, 9, 10, 12, 13, 18, 24, 30, 31, 32, 33, and 35 rendered at moderate DPI and inspected",
+  "source_folder": "C:\\Users\\wangz\\object centric",
   "source_pdf": "C:\\Users\\wangz\\object centric\\paper\\object_binding_tail_audit_iclr.pdf",
   "uses_cached_v4_evidence": true,
+  "verification_scope": [
+    "cached v4 evidence synthesis",
+    "LaTeX final PDF build",
+    "repo/Desktop PDF SHA-256 equality",
+    "minimum page-count gate",
+    "required v4 PDF text markers",
+    "forbidden overclaim scan",
+    "old visible Desktop versions removed",
+    "Desktop source-map lookup row updated"
+  ],
+  "verified_on": "2026-06-19",
   "version": "v4"
 }

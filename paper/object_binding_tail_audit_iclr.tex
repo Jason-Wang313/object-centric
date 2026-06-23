@@ -4,20 +4,13 @@
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
-\usepackage{hyperref}
+\usepackage[hypertexnames=false]{hyperref}
 \usepackage{enumitem}
 \usepackage{caption}
 \usepackage{xcolor}
 \usepackage{longtable}
 \usepackage{array}
 \usepackage{float}
-
-\hypersetup{
-  colorlinks=true,
-  linkcolor=blue,
-  citecolor=blue,
-  urlcolor=blue
-}
 
 \setlist[itemize]{leftmargin=1.35em,itemsep=0.18em,topsep=0.18em}
 \setlength{\parskip}{0.35em}
@@ -137,7 +130,9 @@ The lower-confidence selector is deliberately conservative. It estimates candida
   \centering
   \caption{Evidence tiers used in the paper. The same numeric outcome has a different claim status depending on what information the selector was allowed to use.}
   \label{tab:tiers}
-  \begin{tabular}{p{0.18\linewidth}p{0.31\linewidth}p{0.22\linewidth}p{0.19\linewidth}}
+  \small
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{@{}p{0.18\linewidth}p{0.30\linewidth}p{0.22\linewidth}p{0.19\linewidth}@{}}
     \toprule
     Tier & Allowed information & Disallowed information & Claim use \\
     \midrule
@@ -229,7 +224,9 @@ The stricter no-leak final-test result is more modest. At budget 32, deployable 
   \centering
   \caption{Selected repair results. Gap closure is measured relative to raw and oracle selected utility on held-out final-test conditions.}
   \label{tab:repair}
-  \begin{tabular}{p{0.27\linewidth}p{0.16\linewidth}p{0.20\linewidth}p{0.27\linewidth}}
+  \small
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{@{}p{0.26\linewidth}p{0.15\linewidth}p{0.20\linewidth}p{0.28\linewidth}@{}}
     \toprule
     Evidence tier & Budget & Gap closure / gain & Paper interpretation \\
     \midrule
